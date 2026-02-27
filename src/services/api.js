@@ -3,7 +3,7 @@ import { TokenService } from "./token.service";
 import router from "@/router";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000/api", //import.meta.env.VITE_API_BASE_URL
+  baseURL: "https://api.e13solution.com/api", //import.meta.env.VITE_API_BASE_URL
   withCredentials: true,
 });
 
