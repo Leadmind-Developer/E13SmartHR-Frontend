@@ -30,7 +30,7 @@ api.interceptors.response.use(
 
       try {
         const { data } = await axios.post(
-          "http://localhost:8000/api/auth/refresh",
+          "https://api.e13solution.com/api/auth/refresh",
           {},
           { withCredentials: true }
         );
