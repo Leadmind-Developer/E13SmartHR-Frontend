@@ -1,18 +1,17 @@
+// src/services/api.js
 import axios from "axios";
 import { TokenService } from "./token.service";
 import router from "@/router";
 
 const api = axios.create({
-  baseURL: "https://api.e13solution.com/api", //import.meta.env.VITE_API_BASE_URL
-  withCredentials: true,
+  baseURL: "https://api.e13solution.com/api",
+  withCredentials: true, // important to send cookies
 });
 
 // 🔐 Attach access token
 api.interceptors.request.use((config) => {
   const token = TokenService.getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
@@ -29,6 +28,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        // Send refresh request, cookie automatically included
         const { data } = await axios.post(
           "https://api.e13solution.com/api/auth/refresh",
           {},
@@ -36,9 +36,7 @@ api.interceptors.response.use(
         );
 
         TokenService.setAccessToken(data.accessToken);
-
-        originalRequest.headers.Authorization =
-          `Bearer ${data.accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
 
         return api(originalRequest);
       } catch (err) {
