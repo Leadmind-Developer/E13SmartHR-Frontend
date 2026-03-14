@@ -722,22 +722,22 @@ export const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore();
 
-  // Restore session on refresh
-  if (!auth.user) {
-    await auth.fetchUser();
+  if (!auth.user && TokenService.getAccessToken()) {
+    try {
+      await auth.fetchUser();
+    } catch (e) {
+      TokenService.clear();
+    }
   }
 
-  // 🔐 Protected route
   if (to.meta.requiresAuth && !auth.user) {
     return "/login";
   }
 
-  // 🧭 Role enforcement
   if (to.meta.role && auth.user?.role !== to.meta.role) {
     return redirectAfterLogin(auth.user.role);
   }
 
-  // 🚪 Logged-in user visiting login
   if (to.meta.guestOnly && auth.user) {
     return redirectAfterLogin(auth.user.role);
   }
