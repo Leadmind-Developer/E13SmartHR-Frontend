@@ -17,4 +17,11 @@ export const AuthService = {
     const { data } = await api.get("/users/me");
     return data;
   },
+
+  async refresh() {
+  const { data } = await api.post("/auth/refresh");
+  TokenService.setAccessToken(data.accessToken);
+  return data;
+}
+  
 };
