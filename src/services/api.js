@@ -8,14 +8,14 @@ const api = axios.create({
   withCredentials: true, // important to send cookies
 });
 
-// 🔐 Attach access token
-api.interceptors.request.use((config) => {
-  const token = TokenService.getAccessToken();
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+let isRefreshing = false;
+let queue = [];
 
-// 🔁 Auto refresh on 401
+function processQueue(token) {
+  queue.forEach((cb) => cb(token));
+  queue = [];
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -23,13 +23,22 @@ api.interceptors.response.use(
 
     if (
       error.response?.status === 401 &&
-      !originalRequest._retry
+      !originalRequest._retry &&
       !originalRequest.url.includes("/auth/")
-    ) 
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          queue.push((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(api(originalRequest));
+          });
+        });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
-        // Send refresh request, cookie automatically included
         const { data } = await axios.post(
           "https://api.e13solution.com/api/auth/refresh",
           {},
@@ -37,13 +46,20 @@ api.interceptors.response.use(
         );
 
         TokenService.setAccessToken(data.accessToken);
-        originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+
+        processQueue(data.accessToken);
+
+        originalRequest.headers.Authorization =
+          `Bearer ${data.accessToken}`;
 
         return api(originalRequest);
+
       } catch (err) {
         TokenService.clear();
         router.push("/login");
         return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
       }
     }
 
