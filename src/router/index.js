@@ -722,17 +722,41 @@ export const router = createRouter({
 router.beforeEach((to) => {
   const auth = useAuthStore();
 
-  if (to.meta.requiresAuth && !auth.user) {
+  const requiresAuth = to.meta.requiresAuth;
+  const guestOnly = to.meta.guestOnly;
+  const role = to.meta.role;
+
+  /*
+  |--------------------------------------------------------------------------
+  | Require Authentication
+  |--------------------------------------------------------------------------
+  */
+
+  if (requiresAuth && !auth.user) {
     return "/login";
   }
 
-  if (to.meta.role && auth.user?.role !== to.meta.role) {
+  /*
+  |--------------------------------------------------------------------------
+  | Prevent logged users from visiting guest pages
+  |--------------------------------------------------------------------------
+  */
+
+  if (guestOnly && auth.user) {
     return redirectAfterLogin(auth.user.role);
   }
 
-  if (to.meta.guestOnly && auth.user) {
+  /*
+  |--------------------------------------------------------------------------
+  | Role-based protection
+  |--------------------------------------------------------------------------
+  */
+
+  if (role && auth.user && auth.user.role !== role) {
     return redirectAfterLogin(auth.user.role);
   }
+
+  return true;
 });
 
 export default router;
