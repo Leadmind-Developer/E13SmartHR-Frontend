@@ -1,21 +1,26 @@
-import { fileURLToPath, URL } from 'node:url'
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
+import { fileURLToPath, URL } from "node:url";
+import { defineConfig } from "vite";
+import vue from "@vitejs/plugin-vue";
 
 export default defineConfig({
-  plugins: [
-    vue(),
-  ],
+  plugins: [vue()],
+
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      moment: 'moment/moment.js'
-    },
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      moment: "moment/moment.js"
+    }
   },
+
   server: {
-    port: 3000,
+    port: 3000
   },
+
   optimizeDeps: {
-    include: ['vue-draggable-next']
+    include: ["vue-draggable-next"]
+  },
+
+  build: {
+    chunkSizeWarningLimit: 1500
   }
-})
+});
