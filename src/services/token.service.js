@@ -1,15 +1,15 @@
-const ACCESS_TOKEN_KEY = "e13_access_token";
+let accessToken = null;
 
 export const TokenService = {
   getAccessToken() {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
+    return accessToken;
   },
 
   setAccessToken(token) {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+    accessToken = token;
   },
 
   clear() {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    accessToken = null;
   },
 };
