@@ -575,4 +575,4 @@ app.component(VueFeather.name, VueFeather)
 app.component('star-rating', StarRating)
 app.component('vue3-select', Vue3Select);
 app.component('date-picker', DatePicker);
-app.use(router).mount('#app');
+app.mount("#app");
