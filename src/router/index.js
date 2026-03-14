@@ -719,16 +719,8 @@ export const router = createRouter({
 });
 
 
-router.beforeEach(async (to) => {
+router.beforeEach((to) => {
   const auth = useAuthStore();
-
-  if (!auth.user && TokenService.getAccessToken()) {
-    try {
-      await auth.fetchUser();
-    } catch (e) {
-      TokenService.clear();
-    }
-  }
 
   if (to.meta.requiresAuth && !auth.user) {
     return "/login";
