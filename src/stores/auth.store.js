@@ -29,6 +29,17 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    async restoreSession() {
+  try {
+    const { data } = await AuthService.refresh();
+    this.user = await AuthService.me();
+    return true;
+  } catch {
+    this.user = null;
+    return false;
+  }
+}
+
     async logout() {
       await AuthService.logout();
       this.user = null;
