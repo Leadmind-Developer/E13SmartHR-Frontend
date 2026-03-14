@@ -1,34 +1,95 @@
 // src/services/api.js
+
 import axios from "axios";
-import { TokenService } from "./token.service";
 import router from "@/router";
+import { TokenService } from "./token.service";
+
+const API_BASE_URL = "https://api.e13solution.com/api";
+
+/*
+|--------------------------------------------------------------------------
+| Axios Instance
+|--------------------------------------------------------------------------
+*/
 
 const api = axios.create({
-  baseURL: "https://api.e13solution.com/api",
-  withCredentials: true, // important to send cookies
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 });
 
-let isRefreshing = false;
-let queue = [];
+/*
+|--------------------------------------------------------------------------
+| Refresh Control
+|--------------------------------------------------------------------------
+*/
 
-function processQueue(token) {
-  queue.forEach((cb) => cb(token));
-  queue = [];
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+/**
+ * Notify all queued requests after token refresh
+ */
+function notifySubscribers(token) {
+  refreshSubscribers.forEach((callback) => callback(token));
+  refreshSubscribers = [];
 }
+
+/**
+ * Add request to refresh queue
+ */
+function subscribeTokenRefresh(callback) {
+  refreshSubscribers.push(callback);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Request Interceptor
+|--------------------------------------------------------------------------
+| Attach access token to every request
+*/
+
+api.interceptors.request.use(
+  (config) => {
+    const token = TokenService.getAccessToken();
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/*
+|--------------------------------------------------------------------------
+| Response Interceptor
+|--------------------------------------------------------------------------
+| Handles access token expiration
+*/
 
 api.interceptors.response.use(
   (response) => response,
+
   async (error) => {
     const originalRequest = error.config;
 
+    const status = error.response?.status;
+
     if (
-      error.response?.status === 401 &&
+      status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url.includes("/auth/")
+      !originalRequest.url?.includes("/auth/")
     ) {
+      /*
+      |--------------------------------------------------------------------------
+      | If refresh already running → queue request
+      |--------------------------------------------------------------------------
+      */
+
       if (isRefreshing) {
         return new Promise((resolve) => {
-          queue.push((token) => {
+          subscribeTokenRefresh((token) => {
             originalRequest.headers.Authorization = `Bearer ${token}`;
             resolve(api(originalRequest));
           });
@@ -39,25 +100,45 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
+        /*
+        |--------------------------------------------------------------------------
+        | Refresh Access Token
+        |--------------------------------------------------------------------------
+        */
+
         const { data } = await axios.post(
-          "https://api.e13solution.com/api/auth/refresh",
+          `${API_BASE_URL}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
-        TokenService.setAccessToken(data.accessToken);
+        const newToken = data?.accessToken;
 
-        processQueue(data.accessToken);
+        if (!newToken) {
+          throw new Error("Invalid refresh response");
+        }
 
-        originalRequest.headers.Authorization =
-          `Bearer ${data.accessToken}`;
+        TokenService.setAccessToken(newToken);
+
+        notifySubscribers(newToken);
+
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return api(originalRequest);
+      } catch (refreshError) {
+        /*
+        |--------------------------------------------------------------------------
+        | Refresh Failed → logout user
+        |--------------------------------------------------------------------------
+        */
 
-      } catch (err) {
         TokenService.clear();
-        router.push("/login");
-        return Promise.reject(err);
+
+        if (router.currentRoute.value.path !== "/login") {
+          router.push("/login");
+        }
+
+        return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
