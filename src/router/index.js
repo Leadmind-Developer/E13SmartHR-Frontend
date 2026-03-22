@@ -719,8 +719,12 @@ export const router = createRouter({
 });
 
 
-router.beforeEach((to) => {
+router.beforeEach(async (to) => {
   const auth = useAuthStore();
+
+  if (!auth.initialized) {
+    await auth.restoreSession();
+  }
 
   const requiresAuth = to.meta.requiresAuth;
   const guestOnly = to.meta.guestOnly;
