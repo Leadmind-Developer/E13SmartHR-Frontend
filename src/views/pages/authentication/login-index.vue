@@ -1,6 +1,7 @@
 <script>
 import { AuthService } from "@/services/auth.service";
 import { redirectAfterLogin } from "@/utils/auth-redirect";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default {
   data() {
@@ -25,7 +26,9 @@ export default {
       this.error = null;
 
       try {
-        const user = await AuthService.login(this.form);
+        const auth = useAuthStore();
+
+        const user = await auth.login(this.form); // ✅ uses store action
 
         // ✅ role-aware redirect
         this.$router.push(redirectAfterLogin(user.role));
