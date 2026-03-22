@@ -9,6 +9,7 @@ import VueFeather from 'vue-feather';
 import FlagIcon from 'vue-flag-icon';
 import StarRating from "vue3-star-ratings";
 import { createPinia } from "pinia";
+import { useAuthStore } from "@/stores/auth.store";
 
 /************Breadcrumb********************/
 
@@ -302,6 +303,9 @@ const app = createApp(App)
 const pinia = createPinia();
 
 app.use(pinia);
+
+const auth = useAuthStore();
+await auth.restoreSession();
 
 app.use(router);
 
