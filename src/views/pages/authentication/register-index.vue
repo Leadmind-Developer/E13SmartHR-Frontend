@@ -33,7 +33,7 @@ export default {
 
   methods: {
     updateBodyClass() {
-      if (this.$route.path.includes("/register")) {
+      if (this.$route.path.includes("/register-company")) {
         document.body.classList.add("bg-white");
       } else {
         document.body.classList.remove("bg-white");
