@@ -2,7 +2,7 @@
 const data = [
   {
     key: "1",
-    Subscriber: "BrightWave Innovations",
+    Subscriber: "Techtrep Media",
     Image: "company-01.svg",
     Plan: "Advanced (Monthly)",
     Billing_Cycle: "30 Days",
@@ -14,7 +14,7 @@ const data = [
   },
   {
     key: "2",
-    Subscriber: "Stellar Dynamics",
+    Subscriber: "Nexa Events",
     Image: "company-02.svg",
     Plan: "Basic (Yearly)",
     Billing_Cycle: "365 Days",
@@ -26,7 +26,7 @@ const data = [
   },
   {
     key: "3",
-    Subscriber: "Quantum Nexus",
+    Subscriber: "E13Solution",
     Image: "company-03.svg",
     Plan: "Advanced (Monthly)",
     Billing_Cycle: "30 Days",
@@ -38,7 +38,7 @@ const data = [
   },
   {
     key: "4",
-    Subscriber: "EcoVision Enterprises",
+    Subscriber: "1305 Clothier",
     Image: "company-04.svg",
     Plan: "Advanced (Monthly)",
     Billing_Cycle: "30 Days",
