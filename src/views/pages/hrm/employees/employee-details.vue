@@ -259,7 +259,7 @@
                   <div>
                     <span class="d-inline-flex align-items-center"> Primary </span>
                     <h6 class="d-flex align-items-center fw-medium mt-1">
-                      Adrian Peralt
+                      Timilehin James
                       <span class="d-inline-flex mx-1"
                         ><i class="ti ti-point-filled text-danger"></i></span
                       >Father
