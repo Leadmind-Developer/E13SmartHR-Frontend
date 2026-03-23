@@ -472,9 +472,9 @@ export default {
       valueSix,
       EmpAdmin: [
         { label: "Select", value: "Select" },
-        { label: "Anthony Lewis", value: "Anthony Lewis" },
-        { label: "Brian Villalobos", value: "Brian Villalobos" },
-        { label: "Harvey Smith", value: "Harvey Smith" },
+        { label: "Timilehin James", value: "Timilehin James" },
+        { label: "Brian Adedayo", value: "Brian Adedayo" },
+        { label: "Cynthia Smith", value: "Cynthia Smith" },
       ],
       LeaveType: [
         { label: "Select", value: "Select" },
