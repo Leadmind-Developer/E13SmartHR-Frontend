@@ -701,6 +701,7 @@
 </template>
 <script>
 import "daterangepicker/daterangepicker.css";
+import { getSuperDashboard } from "@/services/superDashboard.service";
 import "daterangepicker/daterangepicker.js";
 import { ref } from "vue";
 import { onMounted } from "vue";
@@ -744,7 +745,7 @@ export default {
       return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
     }
 
-    onMounted(() => {
+    onMounted(async () => {
       if (dateRangeInput.value) {
         const start = moment().subtract(6, "days");
         const end = moment();
@@ -773,7 +774,46 @@ export default {
       }
     });
 
+    mounted() {
+  this.loadDashboard();
+},
+
+methods: {
+  toggleHeader() {
+    document.getElementById("collapse-header").classList.toggle("active");
+    document.body.classList.toggle("header-collapse");
+  },
+
+  async loadDashboard() {
+    try {
+      this.loading = true;
+
+      const data = await getSuperDashboard();
+
+      this.dashboard = data;
+
+      // Bind values to UI
+      this.totalCompanies = data.companies.total;
+      this.activeCompanies = data.companies.active;
+      this.totalSubscribers = data.users.total;
+      this.totalRevenue = data.revenue.total;
+
+      // Charts
+      this.revenueCharts.series = data.revenue.chart.series;
+      this.revenueCharts.income.xaxis.categories =
+        data.revenue.chart.categories;
+
+    } catch (err) {
+      console.error("❌ Dashboard error:", err);
+    } finally {
+      this.loading = false;
+    }
+  }
+}
+
     return {
+      loading: false,
+      dashboard: null,
       dateRangeInput,
     };
   },
