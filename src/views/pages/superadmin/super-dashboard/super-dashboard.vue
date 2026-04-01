@@ -551,7 +551,6 @@
     Designed &amp; Developed By 
     <a href="javascript:void(0);" class="text-primary">E13solution Dev Team</a>
   </p>
-</div>
 
     </div> <!-- END content -->
   </div> <!-- END page-wrapper -->
