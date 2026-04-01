@@ -539,20 +539,22 @@
           </div>
         </div>
         <!-- /Recent Plan Expired -->
-        <div v-if="loading" class="text-center p-5">
-         Loading dashboard...
-       </div>
+       <!-- Loading State -->
+<div v-if="loading" class="text-center p-5">
+  Loading dashboard...
+</div>
 
-      <div v-else>
+<!-- Footer -->
+<div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+  <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; E13solution.</p>
+  <p>
+    Designed &amp; Developed By 
+    <a href="javascript:void(0);" class="text-primary">E13solution Dev Team</a>
+  </p>
+</div>
 
-    </div>
-
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
-    </div>
-
-  </div>
+    </div> <!-- END content -->
+  </div> <!-- END page-wrapper -->
   <!-- /Page Wrapper -->
 </template>
 <script>
