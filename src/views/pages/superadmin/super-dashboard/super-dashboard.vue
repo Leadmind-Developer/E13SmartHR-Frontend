@@ -65,7 +65,7 @@
 
       <div class="row">
 
-        <div v-if="!loading" class="row">
+        
         <!-- Total Companies -->
         <div class="col-xl-3 col-sm-6 d-flex">
           <div class="card flex-fill">
@@ -256,7 +256,7 @@
                     class="ti ti-circle-filled me-1 fs-6 text-primary"></i>Revenue</p>
               </div>
               <div id="revenue-income">
-                <apexchart v-if="!loading" type="bar" height="280" :options="revenueCharts.income" :series="revenueCharts.series">
+                <apexchart type="bar" height="280" :options="revenueCharts.income" :series="revenueCharts.series">
                 </apexchart>
               </div>
             </div>
@@ -315,186 +315,24 @@
 
         <!-- Recent Transactions -->
         <div class="col-xxl-4 col-xl-12 d-flex">
-          <div class="card flex-fill">
-            <div class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-              <h5 class="mb-2">Recent Transactions</h5>
-              <router-link to="/super-admin/purchase-transaction" class="btn btn-light btn-md mb-2">View
-                All</router-link>
-            </div>
-            <div class="card-body pb-2">
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/company/company-02.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Stellar Dynamics</a></h6>
-                    <p class="fs-13 d-inline-flex align-items-center"><span class="text-info">#12457</span><i
-                        class="ti ti-circle-filled fs-4 text-primary mx-1"></i>14 Jan 2025</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <h6 class="mb-1">+$245</h6>
-                  <p class="fs-13">Basic (Monthly)</p>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/company/company-03.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Quantum Nexus</a></h6>
-                    <p class="fs-13 d-inline-flex align-items-center"><span class="text-info">#65974</span><i
-                        class="ti ti-circle-filled fs-4 text-primary mx-1"></i>14 Jan 2025</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <h6 class="mb-1">+$395</h6>
-                  <p class="fs-13">Enterprise (Yearly)</p>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/company/company-05.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Aurora Technologies</a></h6>
-                    <p class="fs-13 d-inline-flex align-items-center"><span class="text-info">#22457</span><i
-                        class="ti ti-circle-filled fs-4 text-primary mx-1"></i>14 Jan 2025</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <h6 class="mb-1">+$145</h6>
-                  <p class="fs-13">Advanced (Monthly)</p>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/company/company-07.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">TerraFusion Energy</a></h6>
-                    <p class="fs-13 d-inline-flex align-items-center"><span class="text-info">#43412</span><i
-                        class="ti ti-circle-filled fs-4 text-primary mx-1"></i>14 Jan 2025</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <h6 class="mb-1">+$145</h6>
-                  <p class="fs-13">Enterprise (Monthly)</p>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-1">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/company/company-08.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Epicurean Delights</a></h6>
-                    <p class="fs-13 d-inline-flex align-items-center"><span class="text-info">#43567</span><i
-                        class="ti ti-circle-filled fs-4 text-primary mx-1"></i>14 Jan 2025</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <h6 class="mb-1">+$977</h6>
-                  <p class="fs-13">Premium (Yearly)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- /Recent Transactions -->
+  <div class="card flex-fill">
+    <div class="card-header ...">
+    </div>
 
-        <!-- Recently Registered -->
-        <div class="col-xxl-4 col-xl-6 d-flex">
-          <div class="card flex-fill">
-            <div class="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-              <h5 class="mb-2">Recently Registered</h5>
-              <router-link to="/super-admin/purchase-transaction" class="btn btn-light btn-md mb-2">View
-                All</router-link>
-            </div>
-            <div class="card-body pb-2">
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/icons/company-icon-11.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Pitch</a></h6>
-                    <p class="fs-13">Basic (Monthly)</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <p class="fs-13 mb-1">150 Users</p>
-                  <h6 class="fs-13 fw-normal">pitch.example.com</h6>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/icons/company-icon-12.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Initech</a></h6>
-                    <p class="fs-13">Enterprise (Yearly)</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <p class="fs-13 mb-1">200 Users</p>
-                  <h6 class="fs-13 fw-normal">initech.example.com</h6>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/icons/company-icon-13.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Umbrella Corp</a></h6>
-                    <p class="fs-13">Advanced (Monthly)</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <p class="fs-13 mb-1">129 Users</p>
-                  <h6 class="fs-13 fw-normal">umbcorp.example.com</h6>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-3">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/icons/company-icon-14.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Capital Partners</a></h6>
-                    <p class="fs-13">Enterprise (Monthly)</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <p class="fs-13 mb-1">103 Users</p>
-                  <h6 class="fs-13 fw-normal">capitalpart.example.com</h6>
-                </div>
-              </div>
-              <div class="d-sm-flex justify-content-between flex-wrap mb-1">
-                <div class="d-flex align-items-center mb-2">
-                  <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
-                    <img src="@/assets/img/icons/company-icon-15.svg" class="img-fluid w-auto h-auto" alt="img">
-                  </a>
-                  <div class="ms-2 flex-fill">
-                    <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Massive Dynamic</a></h6>
-                    <p class="fs-13">Premium (Yearly)</p>
-                  </div>
-                </div>
-                <div class="text-sm-end mb-2">
-                  <p class="fs-13 mb-1">108 Users</p>
-                  <h6 class="fs-13 fw-normal">msdynamic.example.com</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- /Recent Registered -->
+    <div class="card-body pb-2">
+      <RecentTransactions :transactions="dashboard?.transactions || []" />
+    </div>
+  </div>
+</div>
+
+<!-- Recently Registered -->
+<div class="col-xxl-4 col-xl-12 d-flex">
+  <div class="card flex-fill">
+    <div class="card-body pb-2">
+      <RecentCompanies :companies="dashboard?.recentCompanies || []" />
+    </div>
+  </div>
+</div>
 
         <!-- Recent Plan Expired -->
         <div class="col-xxl-4 col-xl-6 d-flex">
@@ -526,11 +364,11 @@
                 <div class="tab-pane fade show active" id="expired">
                   <div class="d-sm-flex justify-content-between flex-wrap mb-3">
                     <div class="d-flex align-items-center mb-2">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-16.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Silicon Corp</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Silicon Corp</a></h6>
                         <p class="fs-13">Expired : 10 Apr 2025</p>
                       </div>
                     </div>
@@ -542,11 +380,11 @@
                   </div>
                   <div class="d-sm-flex justify-content-between flex-wrap mb-3">
                     <div class="d-flex align-items-center mb-2">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-14.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Hubspot</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Hubspot</a></h6>
                         <p class="fs-13">Expired : 12 Jun 2025</p>
                       </div>
                     </div>
@@ -558,11 +396,11 @@
                   </div>
                   <div class="d-sm-flex justify-content-between flex-wrap mb-3">
                     <div class="d-flex align-items-center mb-2">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-18.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Licon Industries</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Licon Industries</a></h6>
                         <p class="fs-13">Expired : 16 Jun 2025</p>
                       </div>
                     </div>
@@ -574,11 +412,11 @@
                   </div>
                   <div class="d-flex justify-content-between flex-wrap mb-3">
                     <div class="d-flex align-items-center mb-2">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/company/company-07.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">TerraFusion Energy</a>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">TerraFusion Energy</a>
                         </h6>
                         <p class="fs-13">Expired : 12 May 2025</p>
                       </div>
@@ -591,11 +429,11 @@
                   </div>
                   <div class="d-sm-flex justify-content-between flex-wrap mb-1">
                     <div class="d-flex align-items-center mb-2">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/company/company-08.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Epicurean Delights</a>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Epicurean Delights</a>
                         </h6>
                         <p class="fs-13">Expired : 15 May 2025</p>
                       </div>
@@ -610,11 +448,11 @@
                 <div class="tab-pane fade" id="request">
                   <div class="d-flex justify-content-between mb-4">
                     <div class="d-flex align-items-center overflow-hidden">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-16.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill overflow-hidden">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Silicon Corp</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Silicon Corp</a></h6>
                         <p class="fs-13 text-info text-truncate">silicon.example.com</p>
                       </div>
                     </div>
@@ -627,11 +465,11 @@
                   </div>
                   <div class="d-flex justify-content-between mb-4">
                     <div class="d-flex align-items-center overflow-hidden">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-14.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill overflow-hidden">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Hubspot</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Hubspot</a></h6>
                         <p class="fs-13 text-info text-truncate">hubspot.example.com</p>
                       </div>
                     </div>
@@ -644,11 +482,11 @@
                   </div>
                   <div class="d-flex justify-content-between mb-4">
                     <div class="d-flex align-items-center overflow-hidden">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/icons/company-icon-18.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill overflow-hidden">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Licon Industries</a></h6>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Licon Industries</a></h6>
                         <p class="fs-13 text-info text-truncate">licon.example.com</p>
                       </div>
                     </div>
@@ -661,11 +499,11 @@
                   </div>
                   <div class="d-flex justify-content-between mb-4">
                     <div class="d-flex align-items-center overflow-hidden">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/company/company-07.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill overflow-hidden">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">TerraFusion Energy</a>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">TerraFusion Energy</a>
                         </h6>
                         <p class="fs-13 text-info text-truncate">fusion.example.com</p>
                       </div>
@@ -679,11 +517,11 @@
                   </div>
                   <div class="d-flex justify-content-between mb-0">
                     <div class="d-flex align-items-center overflow-hidden">
-                      <a href="javscript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
+                      <a href="javascript:void(0);" class="avatar avatar-md bg-gray-100 rounded-circle flex-shrink-0">
                         <img src="@/assets/img/company/company-08.svg" class="img-fluid w-auto h-auto" alt="img">
                       </a>
                       <div class="ms-2 flex-fill overflow-hidden">
-                        <h6 class="fs-medium text-truncate mb-1"><a href="javscript:void(0);">Epicurean Delights</a>
+                        <h6 class="fs-medium text-truncate mb-1"><a href="javascript:void(0);">Epicurean Delights</a>
                         </h6>
                         <p class="fs-13 text-info text-truncate">epicuran.example.com</p>
                       </div>
@@ -701,11 +539,11 @@
           </div>
         </div>
         <!-- /Recent Plan Expired -->
-        <div v-else class="text-center p-5">
+        <div v-if="loading" class="text-center p-5">
          Loading dashboard...
        </div>
 
-      </div>
+      <div v-else>
 
     </div>
 
@@ -719,11 +557,14 @@
 </template>
 <script>
 import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
+import "daterangepicker"; // important (no direct constructor)
 
-import { ref, reactive, onMounted } from "vue";
+import RecentTransactions from "@/components/dashboard/RecentTransactions.vue";
+import RecentCompanies from "@/components/dashboard/RecentCompanies.vue";
+
+import { ref, reactive, onMounted, nextTick } from "vue";
 import moment from "moment";
-import DateRangePicker from "daterangepicker";
+import $ from "jquery";
 
 import { getSuperDashboard } from "@/services/superDashboard.service";
 
@@ -740,11 +581,16 @@ import {
 export default {
   name: "SuperDashboard",
 
+  components: {
+    RecentTransactions,
+    RecentCompanies,
+  },
+
   setup() {
     // =========================
     // STATE
     // =========================
-    const loading = ref(false);
+    const loading = ref(true);
     const dashboard = ref(null);
 
     const totalCompanies = ref(0);
@@ -754,7 +600,7 @@ export default {
 
     const dateRangeInput = ref(null);
 
-    // Charts (reactive so UI updates)
+    // Charts (reactive safe structure)
     const charts = reactive({
       totalChart,
       activeChart,
@@ -765,13 +611,16 @@ export default {
       donutChart,
     });
 
+    // =========================
+    // HELPERS
+    // =========================
     const formatCurrency = (value) => {
-    if (!value) return "$0";
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(value);
-  };
+      if (!value) return "₦0";
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(value);
+    };
 
     // =========================
     // METHODS
@@ -786,7 +635,12 @@ export default {
         loading.value = true;
 
         const data = await getSuperDashboard(filters);
-        dashboard.value = data;
+
+        dashboard.value = {
+          ...data,
+          transactions: data?.transactions || [],
+          recentCompanies: data?.recentCompanies || [],
+        };
 
         // =========================
         // BIND DATA → UI
@@ -797,18 +651,24 @@ export default {
         totalRevenue.value = data?.revenue?.total || 0;
 
         // =========================
-        // UPDATE CHARTS
+        // UPDATE CHARTS (SAFE MUTATION)
         // =========================
         if (data?.revenue?.chart) {
-          charts.revenueCharts.series = data.revenue.chart.series;
-          charts.revenueCharts.income.xaxis.categories =
-            data.revenue.chart.categories;
+          charts.revenueCharts.series = data.revenue.chart.series || [];
+
+          if (charts.revenueCharts?.income?.xaxis) {
+            charts.revenueCharts.income.xaxis.categories =
+              data.revenue.chart.categories || [];
+          }
         }
 
         if (data?.companies?.chart) {
-          charts.companyChart.series = data.companies.chart.series;
-          charts.companyChart.company.xaxis.categories =
-            data.companies.chart.categories;
+          charts.companyChart.series = data.companies.chart.series || [];
+
+          if (charts.companyChart?.company?.xaxis) {
+            charts.companyChart.company.xaxis.categories =
+              data.companies.chart.categories || [];
+          }
         }
       } catch (err) {
         console.error("❌ Dashboard error:", err);
@@ -820,27 +680,30 @@ export default {
     // =========================
     // DATE RANGE
     // =========================
-    const bookingRange = (start, end) => {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    };
+    const initDatePicker = async () => {
+      await nextTick(); // ensure DOM is ready
 
-    const initDatePicker = () => {
       if (!dateRangeInput.value) return;
 
       const start = moment().subtract(6, "days");
       const end = moment();
 
-      new DateRangePicker(
-        dateRangeInput.value,
+      $(dateRangeInput.value).daterangepicker(
         {
           startDate: start,
           endDate: end,
           ranges: {
             Today: [moment(), moment()],
-            Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
+            Yesterday: [
+              moment().subtract(1, "days"),
+              moment().subtract(1, "days"),
+            ],
             "Last 7 Days": [moment().subtract(6, "days"), moment()],
             "Last 30 Days": [moment().subtract(29, "days"), moment()],
-            "This Month": [moment().startOf("month"), moment().endOf("month")],
+            "This Month": [
+              moment().startOf("month"),
+              moment().endOf("month"),
+            ],
             "Last Month": [
               moment().subtract(1, "month").startOf("month"),
               moment().subtract(1, "month").endOf("month"),
@@ -848,9 +711,7 @@ export default {
           },
         },
         (start, end) => {
-          bookingRange(start, end);
-
-          // 🔥 Reload dashboard with filters
+          // Reload dashboard with filters
           loadDashboard({
             from: start.format("YYYY-MM-DD"),
             to: end.format("YYYY-MM-DD"),
@@ -858,15 +719,18 @@ export default {
         }
       );
 
-      bookingRange(start, end);
+      // Set initial display value
+      $(dateRangeInput.value).val(
+        start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY")
+      );
     };
 
     // =========================
     // LIFECYCLE
     // =========================
-    onMounted(() => {
-      initDatePicker();
-      loadDashboard(); // initial load
+    onMounted(async () => {
+      await initDatePicker();
+      await loadDashboard();
     });
 
     // =========================
