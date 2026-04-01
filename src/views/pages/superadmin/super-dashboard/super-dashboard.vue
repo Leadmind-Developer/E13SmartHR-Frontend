@@ -555,6 +555,7 @@
     </div> <!-- END content -->
   </div> <!-- END page-wrapper -->
   <!-- /Page Wrapper -->
+</div>
 </template>
 <script>
 import "daterangepicker/daterangepicker.css";
