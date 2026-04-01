@@ -880,6 +880,7 @@ export default {
       activeCompanies,
       totalSubscribers,
       totalRevenue,
+      formatCurrency,
 
       // charts
       ...charts,
