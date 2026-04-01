@@ -316,7 +316,7 @@
         <!-- Recent Transactions -->
         <div class="col-xxl-4 col-xl-12 d-flex">
   <div class="card flex-fill">
-    <div class="card-header ...">
+    <div class="card-header">
     </div>
 
     <div class="card-body pb-2">
@@ -551,7 +551,7 @@
     Designed &amp; Developed By 
     <a href="javascript:void(0);" class="text-primary">E13solution Dev Team</a>
   </p>
-
+</div>
     </div> <!-- END content -->
   </div> <!-- END page-wrapper -->
   <!-- /Page Wrapper -->
