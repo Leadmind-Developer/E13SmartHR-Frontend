@@ -296,8 +296,9 @@
                   <div class="action-icon d-inline-flex">
                     <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_employee"><i
                         class="ti ti-edit"></i></a>
-                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                        class="ti ti-trash"></i></a>
+                    <a href="javascript:void(0);" @click="deleteEmployee(record.key)">
+                        <i class="ti ti-trash"></i>
+                      </a>
                   </div>
                 </template>
               </template>
@@ -354,256 +355,91 @@
 <script>
 import "daterangepicker/daterangepicker.css";
 import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
 import moment from "moment";
 import DateRangePicker from "daterangepicker";
+import employeeService from "@/services/employee.service";
+
 const columns = [
-  {
-    sorter: false,
-  },
+  { sorter: false },
   {
     title: "Emp ID",
     dataIndex: "EmpID",
-    sorter: {
-      compare: (a, b) => {
-        a = a.EmpID.toLowerCase();
-        b = b.EmpID.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.EmpID.localeCompare(b.EmpID),
   },
   {
     title: "Name",
     dataIndex: "Name",
     key: "Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Name.toLowerCase();
-        b = b.Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.Name.localeCompare(b.Name),
   },
   {
     title: "Email",
     dataIndex: "Email",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Email.toLowerCase();
-        b = b.Email.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.Email.localeCompare(b.Email),
   },
   {
     title: "Phone",
     dataIndex: "Phone",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Phone.toLowerCase();
-        b = b.Phone.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.Phone.localeCompare(b.Phone),
   },
   {
     title: "Designation",
     dataIndex: "Designation",
     key: "Designation",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Designation.toLowerCase();
-        b = b.Designation.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.Designation.localeCompare(b.Designation),
   },
   {
     title: "Joining Date",
     dataIndex: "JoiningDate",
     key: "JoiningDate",
-    sorter: {
-      compare: (a, b) => {
-        a = a.JoiningDate.toLowerCase();
-        b = b.JoiningDate.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
   },
   {
     title: "Status",
     dataIndex: "Status",
     key: "Status",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Status.toLowerCase();
-        b = b.Status.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
+    sorter: (a, b) => a.Status.localeCompare(b.Status),
   },
   {
     title: "",
     key: "action",
-    sorter: false,
   },
 ];
-const data = [
-  {
-    key: "1",
-    EmpID: "Emp-001",
-    Name: "Anthony Lewis",
-    Work: "Finance",
-    Email: "anthony@example.com",
-    Phone: "(123) 4567 890",
-    Designation: "Finance",
-    JoiningDate: "12 Sep 2024",
-    Salary: "$40000",
-    Status: "Active",
-    Image: "user-32.jpg",
-  },
-  {
-    key: "2",
-    EmpID: "Emp-002",
-    Name: "Brian Villalobos",
-    Work: "Developer",
-    Email: "brian@example.com",
-    Phone: "(179) 7382 829",
-    Designation: "Developer",
-    JoiningDate: "24 Oct 2024",
-    Salary: "$35000",
-    Status: "Active",
-    Image: "user-09.jpg",
-  },
-  {
-    key: "3",
-    EmpID: "Emp-003",
-    Name: "Harvey Smith",
-    Work: "Developer",
-    Email: "harvey@example.com",
-    Phone: "(184) 2719 738",
-    Designation: "Executive",
-    JoiningDate: "18 Feb 2024",
-    Salary: "$20000",
-    Status: "Active",
-    Image: "user-01.jpg",
-  },
-  {
-    key: "4",
-    EmpID: "Emp-004",
-    Name: "Stephan Peralt",
-    Work: "Executive Officer",
-    Email: "peral@example.com",
-    Phone: "(193) 7839 748",
-    Designation: "Executive ",
-    JoiningDate: "17 Oct 2024",
-    Salary: "$$22000",
-    Status: "Active",
-    Image: "user-33.jpg",
-  },
-  {
-    key: "5",
-    EmpID: "Emp-005",
-    Name: "Doglas Martini",
-    Work: "Manager",
-    Email: "martniwr@example.com",
-    Phone: "(183) 9302 890",
-    Designation: "Manager",
-    JoiningDate: "20 Jun 2024",
-    Salary: "$25000",
-    Status: "Active",
-    Image: "user-34.jpg",
-  },
-  {
-    key: "6",
-    EmpID: "Emp-006",
-    Name: "Linda Ray",
-    Work: "Finance",
-    Email: "ray456@example.com",
-    Phone: "(120) 3728 039",
-    Designation: "Finance",
-    JoiningDate: "10 Apr 2024",
-    Salary: "$30000",
-    Status: "Active",
-    Image: "user-02.jpg",
-  },
-  {
-    key: "7",
-    EmpID: "Emp-007",
-    Name: "Elliot Murray",
-    Work: "Developer",
-    Email: "murray@example.com",
-    Phone: "(102) 8480 832",
-    Designation: "Finance",
-    JoiningDate: "29 Aug 2024",
-    Salary: "$35000",
-    Status: "Active",
-    Image: "user-35.jpg",
-  },
-  {
-    key: "8",
-    EmpID: "Emp-008",
-    Name: "Rebecca Smtih",
-    Work: "Executive",
-    Email: "smtih@example.com",
-    Phone: "(162) 8920 713",
-    Designation: "Executive",
-    JoiningDate: "22 Feb 2024",
-    Salary: "$45000",
-    Status: "Inactive",
-    Image: "user-36.jpg",
-  },
-  {
-    key: "9",
-    EmpID: "Emp-009",
-    Name: "Connie Waters",
-    Work: "Developer",
-    Email: "connie@example.com",
-    Phone: "(189) 0920 723",
-    Designation: "Developer",
-    JoiningDate: "03 Nov 2024",
-    Salary: "$50000",
-    Status: "Active",
-    Image: "user-37.jpg",
-  },
-  {
-    key: "10",
-    EmpID: "Emp-010",
-    Name: "Lori Broaddus",
-    Work: "Finance",
-    Email: "broaddus@example.com",
-    Phone: "(168) 8392 823",
-    Designation: "Finance ",
-    JoiningDate: "17 Dec 2024",
-    Salary: "$25000",
-    Status: "Active",
-    Image: "user-38.jpg",
-  },
-];
+
 const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
+  onChange: () => {},
 };
+
 export default {
   data() {
     return {
-      data,
+      employees: [],
+      loading: false,
+
       columns,
       rowSelection,
-      searchQuery: '',
+
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
+
       title: "Employee",
       text: "Employees",
       text1: "Employee List",
+
+      dateRangeInput: null,
     };
   },
+
+  async mounted() {
+    this.initDateRange();
+    await this.fetchEmployees();
+  },
+
   computed: {
     filteredPages() {
       const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
+
+      return this.employees.filter((record) => {
         return (
           record.EmpID.toLowerCase().includes(query) ||
           record.Name.toLowerCase().includes(query) ||
@@ -612,34 +448,76 @@ export default {
           record.Phone.toLowerCase().includes(query) ||
           record.Designation.toLowerCase().includes(query) ||
           record.JoiningDate.toLowerCase().includes(query) ||
-          record.Salary.toLowerCase().includes(query) ||
           record.Status.toLowerCase().includes(query)
         );
       });
     },
+
     paginatedData() {
       const start = (this.currentPage - 1) * this.pageSize;
       return this.filteredPages.slice(start, start + this.pageSize);
     },
+
     totalPages() {
       return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
     },
   },
-  setup() {
-    const dateRangeInput = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
+  methods: {
+    // ✅ Fetch from API
+    async fetchEmployees() {
+      try {
+        this.loading = true;
 
-    onMounted(() => {
-      if (dateRangeInput.value) {
+        const res = await employeeService.getEmployees();
+
+        this.employees = res.data.map((emp) => ({
+          key: emp.id,
+          EmpID: emp.id.slice(0, 8),
+          Name: `${emp.firstName} ${emp.lastName}`,
+          Email: emp.email,
+          Phone: emp.phone || "-",
+          Designation: emp.position || "-",
+          Work: emp.department || "-",
+          JoiningDate: new Date(emp.createdAt).toLocaleDateString(),
+          Status: emp.status || "Active",
+          Image: "user-01.jpg",
+        }));
+      } catch (err) {
+        console.error("Failed to fetch employees:", err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // ✅ Delete
+    async deleteEmployee(id) {
+      if (!confirm("Delete this employee?")) return;
+
+      try {
+        await employeeService.deleteEmployee(id);
+        await this.fetchEmployees();
+      } catch (err) {
+        console.error("Delete failed:", err);
+      }
+    },
+
+    // ✅ Date picker init (clean)
+    initDateRange() {
+      this.$nextTick(() => {
+        const el = this.$refs.dateRangeInput;
+        if (!el) return;
+
         const start = moment().subtract(6, "days");
         const end = moment();
 
+        const bookingRange = (start, end) => {
+          el.value =
+            start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
+        };
+
         new DateRangePicker(
-          dateRangeInput.value,
+          el,
           {
             startDate: start,
             endDate: end,
@@ -655,25 +533,20 @@ export default {
               ],
             },
           },
-          booking_range
+          bookingRange
         );
 
-        booking_range(start, end);
-      }
-    });
+        bookingRange(start, end);
+      });
+    },
 
-    return {
-      dateRangeInput,
-    };
-  },
-  methods: {
     toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
+      document.getElementById("collapse-header")?.classList.toggle("active");
       document.body.classList.toggle("header-collapse");
     },
+
     getImageUrl(imageName) {
-      return new URL(`/src/assets/img/users/${imageName}`, import.meta.url)
-        .href;
+      return new URL(`/src/assets/img/users/${imageName}`, import.meta.url).href;
     },
   },
 };
