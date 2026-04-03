@@ -1,479 +1,173 @@
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
-  <!-- Page Wrapper -->
+  <layout-header />
+  <layout-sidebar />
+
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_role"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Roles</a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
+
+        <div class="d-flex align-items-center">
+          <select v-model="selectedRoleId" class="form-select w-auto">
+            <option disabled value="">Select Role</option>
+            <option v-for="role in roles" :key="role.id" :value="role.id">
+              {{ role.name }}
+            </option>
+          </select>
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Assets Lists -->
+      <!-- Permissions Table -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+        <div class="card-header">
           <h5>Permissions</h5>
-          <p>Role Name : <span class="text-gray-9 fw-medium">Admin</span></p>
+          <p v-if="selectedRole">Role: <strong>{{ selectedRole.name }}</strong></p>
         </div>
+
         <div class="card-body p-0">
           <div class="table-responsive">
             <table class="table">
-              <thead class="thead-light">
+              <thead>
                 <tr>
-                  <th class="no-sort">Modules</th>
-                  <th>Allow All</th>
-                  <th>Read</th>
-                  <th>Write</th>
-                  <th>Create</th>
-                  <th>Delete</th>
-                  <th>Import</th>
-                  <th>Export</th>
+                  <th>Module</th>
+                  <th v-for="action in actions" :key="action">
+                    {{ action }}
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
-                <tr>
-                  <td class="text-gray-9">Employee</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Holidays</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Leaves</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Events</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Sales</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Training</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Reports</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Tickets</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Holidays</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td class="text-gray-9">Payroll</td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
-                  </td>
-                  <td>
-                    <div class="form-check form-check-md">
-                      <input class="form-check-input" type="checkbox" />
-                    </div>
+                <tr v-for="module in modules" :key="module">
+                  <td>{{ module }}</td>
+
+                  <td v-for="action in actions" :key="action">
+                    <input
+                      type="checkbox"
+                      :checked="hasPermission(module, action)"
+                      @change="togglePermission(module, action)"
+                    />
                   </td>
                 </tr>
               </tbody>
+
             </table>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
     </div>
   </div>
-  <!-- /Page Wrapper -->
-  <roles-modal></roles-modal>
 </template>
+
 <script>
+import api from "@/services/api";
+
 export default {
   data() {
     return {
       title: "Permissions",
       text: "User management",
       text1: "Permissions",
+
+      roles: [],
+      selectedRoleId: "",
+      selectedRole: null,
+
+      permissions: {},
+
+      modules: [
+        "Employee",
+        "Holidays",
+        "Leaves",
+        "Events",
+        "Sales",
+        "Training",
+        "Reports",
+        "Tickets",
+        "Payroll",
+      ],
+
+      actions: [
+        "read",
+        "write",
+        "create",
+        "delete",
+        "import",
+        "export",
+      ],
     };
   },
+
+  watch: {
+    selectedRoleId: "fetchRolePermissions",
+  },
+
+  async mounted() {
+    await this.fetchRoles();
+  },
+
   methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+    /*
+    |--------------------------------------------------------------------------
+    | Fetch Roles
+    |--------------------------------------------------------------------------
+    */
+    async fetchRoles() {
+      try {
+        const res = await api.get("/permissions");
+        this.roles = res.data;
+
+        if (this.roles.length) {
+          this.selectedRoleId = this.roles[0].id;
+        }
+      } catch (err) {
+        console.error("Failed to load roles", err);
+      }
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fetch Permissions (Future-ready)
+    |--------------------------------------------------------------------------
+    */
+    async fetchRolePermissions() {
+      try {
+        this.selectedRole = this.roles.find(
+          (r) => r.id === this.selectedRoleId
+        );
+
+        // 🔥 Replace this with real API when ready
+        // const res = await api.get(`/roles/${this.selectedRoleId}/permissions`);
+        // this.permissions = res.data;
+
+        // TEMP MOCK (until backend supports permissions)
+        this.permissions = {};
+      } catch (err) {
+        console.error("Failed to load permissions", err);
+      }
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permission Helpers
+    |--------------------------------------------------------------------------
+    */
+    hasPermission(module, action) {
+      return this.permissions?.[module]?.[action] || false;
+    },
+
+    togglePermission(module, action) {
+      if (!this.permissions[module]) {
+        this.permissions[module] = {};
+      }
+
+      this.permissions[module][action] =
+        !this.permissions[module][action];
+
+      // 🔥 Future: persist to backend
+      // api.put(`/roles/${this.selectedRoleId}/permissions`, this.permissions);
     },
   },
 };
