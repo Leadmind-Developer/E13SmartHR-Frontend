@@ -335,44 +335,61 @@ const rowSelection = {
   onSelect: () => { },
   onSelectAll: () => { },
 };
+import api from "@/services/api";
+
 export default {
   data() {
     return {
-      title: "Designations",
-      text: "Employees",
-      text1: "Designations",
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
+      designations: [],
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
+      total: 0,
+      selectedDepartment: null,
+      selectedStatus: null,
     };
   },
-  computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.Designation.toLowerCase().includes(query) ||
-          record.Department.toLowerCase().includes(query) ||
-          record.NoofEmployees.toLowerCase().includes(query) ||
-          record.Status.toLowerCase().includes(query)
-        );
-      });
+
+  watch: {
+    searchQuery() {
+      this.fetchDesignations();
     },
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+    currentPage() {
+      this.fetchDesignations();
     },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+    pageSize() {
+      this.fetchDesignations();
+    },
+    selectedDepartment() {
+      this.fetchDesignations();
+    },
+    selectedStatus() {
+      this.fetchDesignations();
     },
   },
+
+  mounted() {
+    this.fetchDesignations();
+  },
+
   methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+    async fetchDesignations() {
+      try {
+        const { data } = await api.get("/designations", {
+          params: {
+            page: this.currentPage,
+            limit: this.pageSize,
+            search: this.searchQuery,
+            status: this.selectedStatus,
+            departmentId: this.selectedDepartment,
+          },
+        });
+
+        this.designations = data.data;
+        this.total = data.pagination.total;
+      } catch (err) {
+        console.error(err);
+      }
     },
   },
 };
