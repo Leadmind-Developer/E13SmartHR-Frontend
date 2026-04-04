@@ -301,43 +301,51 @@ const rowSelection = {
   onSelect: () => { },
   onSelectAll: () => { },
 };
+import api from "@/services/api";
+
 export default {
   data() {
     return {
-      title: "Departments",
-      text: "Employees",
-      text1: "Departments",
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
+      departments: [],
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
+      total: 0,
     };
   },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+
+  watch: {
+    searchQuery() {
+      this.fetchDepartments();
+    },
+    currentPage() {
+      this.fetchDepartments();
+    },
+    pageSize() {
+      this.fetchDepartments();
     },
   },
-  computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.Department.toLowerCase().includes(query) ||
-          record.NoofEmployees.toLowerCase().includes(query) ||
-          record.Status.toLowerCase().includes(query)
-        );
-      });
-    },
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+
+  mounted() {
+    this.fetchDepartments();
+  },
+
+  methods: {
+    async fetchDepartments() {
+      try {
+        const { data } = await api.get("/departments", {
+          params: {
+            page: this.currentPage,
+            limit: this.pageSize,
+            search: this.searchQuery,
+          },
+        });
+
+        this.departments = data.data;
+        this.total = data.pagination.total;
+      } catch (err) {
+        console.error(err);
+      }
     },
   },
 };
