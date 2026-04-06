@@ -58,12 +58,12 @@
               <div class="text-center px-3 pb-3 border-bottom">
                 <div class="mb-3">
                   <h5 class="d-flex align-items-center justify-content-center mb-1">
-                    Stephan Peralt<i
+                    {{ employee?.fullName }}<i
                       class="ti ti-discount-check-filled text-success ms-1"
                     ></i>
                   </h5>
                   <span class="badge badge-soft-dark fw-medium me-2">
-                    <i class="ti ti-point-filled me-1"></i>Software Developer
+                    <i class="ti ti-point-filled me-1"></i>{{ employee?.designation }}
                   </span>
                   <span class="badge badge-soft-secondary fw-medium"
                     >10+ years of Experience</span
@@ -82,7 +82,7 @@
                       <i class="ti ti-star me-2"></i>
                       Team
                     </span>
-                    <p class="text-dark">UI/UX Design</p>
+                    <p class="text-dark">{{ employee?.department }}</p>
                   </div>
                   <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="d-inline-flex align-items-center">
@@ -1036,17 +1036,24 @@
   <employee-details-modal></employee-details-modal>
 </template>
 <script>
+import api from "@/services/api";
+
 export default {
   data() {
     return {
-      
+      employee: null,
+    };
+  },
+
+  async mounted() {
+    const id = this.$route.params.id;
+
+    try {
+      const { data } = await api.get(`/employees/${id}/details`);
+      this.employee = data.data;
+    } catch (err) {
+      console.error(err);
     }
   },
-  methods: {
-        toggleHeader() {
-            document.getElementById("collapse-header").classList.toggle("active");
-            document.body.classList.toggle("header-collapse");
-        },
-    },
-}
+};
 </script>
