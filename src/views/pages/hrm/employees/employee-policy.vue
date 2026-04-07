@@ -1,358 +1,287 @@
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
-  <!-- Page Wrapper -->
+  <layout-header />
+  <layout-sidebar />
+
   <div class="page-wrapper">
     <div class="content">
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+
+        <div class="d-flex align-items-center flex-wrap">
           <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_policy"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Policy</a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_policy">
+              <i class="ti ti-circle-plus me-2"></i>Add Policy
+            </button>
           </div>
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Policy list -->
+      <!-- Card -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Policies List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="me-3">
-              <div class="input-icon-end position-relative">
-                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                  placeholder="dd/mm/yyyy - dd/mm/yyyy" />
-                <span class="input-icon-addon">
-                  <i class="ti ti-chevron-down"></i>
-                </span>
-              </div>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Department
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Designing</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Developer</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">DevOps</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
+        <div class="card-header d-flex justify-content-between flex-wrap">
+          <h5>Policies</h5>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <!-- Search -->
+            <input
+              v-model="filters.search"
+              @input="debouncedFetch"
+              class="form-control"
+              placeholder="Search policies..."
+            />
+
+            <!-- Department Filter -->
+            <select v-model="filters.departmentId" @change="fetchPolicies" class="form-select">
+              <option value="">All Departments</option>
+              <option v-for="d in departments" :key="d.id" :value="d.id">
+                {{ d.name }}
+              </option>
+            </select>
+
+            <!-- Sort -->
+            <select v-model="filters.sortOrder" @change="fetchPolicies" class="form-select">
+              <option value="DESC">Newest</option>
+              <option value="ASC">Oldest</option>
+            </select>
           </div>
         </div>
+
         <div class="card-body p-0">
-          <div class="row">
-            <div class="col-sm-12 col-md-6">
-              <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-                  <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                    class="form-select form-select-sm">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select> Entries</label></div>
-            </div>
-            <div class="col-sm-12 col-md-6">
-              <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery"
-                    type="search" class="form-control form-control-sm" placeholder="Search"
-                    aria-controls="DataTables_Table_0"></label>
-              </div>
-            </div>
+          <!-- Loading -->
+          <div v-if="loading" class="p-4 text-center">
+            Loading policies...
           </div>
-          <div class="custom-datatable-filter table-responsive">
-            <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-              :row-selection="rowSelection">
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'Name'">
-                  <h6 class="fs-14 fw-medium text-gray-9">{{ record.Name }}</h6>
-                </template>
-                <template v-if="column.key === 'action'">
-                  <div class="action-icon d-inline-flex">
-                    <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_policy"><i
-                        class="ti ti-edit"></i></a>
-                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                        class="ti ti-trash"></i></a>
-                  </div>
-                </template>
-              </template>
-            </a-table>
+
+          <!-- Error -->
+          <div v-if="error" class="p-4 text-danger text-center">
+            {{ error }}
           </div>
-          <div class="row pagination">
-            <div class="col-sm-12 col-md-5">
-              <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                Showing {{
-                  (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-                  filteredPages.length) }} of {{
-                  filteredPages.length }}
-                entries</div>
+
+          <!-- Table -->
+          <div v-if="!loading && !error" class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Department</th>
+                  <th>Description</th>
+                  <th>Created</th>
+                  <th>Status</th>
+                  <th class="text-end">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="policy in policies" :key="policy.id">
+                  <td>{{ policy.name }}</td>
+                  <td>{{ policy.Department?.name || "-" }}</td>
+                  <td>{{ policy.description }}</td>
+                  <td>{{ formatDate(policy.createdAt) }}</td>
+
+                  <!-- Acknowledgement -->
+                  <td>
+                    <span
+                      v-if="policy.acknowledged"
+                      class="badge bg-success"
+                    >
+                      Acknowledged
+                    </span>
+                    <span v-else class="badge bg-warning">
+                      Pending
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="text-end">
+                    <button
+                      v-if="!policy.acknowledged"
+                      @click="acknowledge(policy.id)"
+                      class="btn btn-sm btn-outline-success me-2"
+                    >
+                      Acknowledge
+                    </button>
+
+                    <button
+                      class="btn btn-sm btn-outline-primary me-2"
+                      @click="editPolicy(policy)"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      class="btn btn-sm btn-outline-danger"
+                      @click="deletePolicy(policy.id)"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+
+                <tr v-if="policies.length === 0">
+                  <td colspan="6" class="text-center p-4">
+                    No policies found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between p-3">
+            <div>
+              Showing {{ pagination.from }} - {{ pagination.to }} of {{ pagination.total }}
             </div>
-            <div class="col-sm-12 col-md-7">
-              <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-                <ul class="pagination">
-                  <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-                    id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true"
-                      role="link" data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-                    </a></li>
-                  <li class="paginate_button page-item" :class="{ active: page === currentPage }"
-                    v-for="page in totalPages" :key="page">
-                    <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                      role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-                  </li>
-                  <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-                    id="DataTables_Table_0_next">
-                    <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next"
-                      tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage < totalPages ? currentPage++ : null"><i
-                        class="ti ti-chevron-right"></i></a>
-                  </li>
-                </ul>
-              </div>
+
+            <div>
+              <button
+                class="btn btn-sm btn-light me-2"
+                :disabled="pagination.page === 1"
+                @click="changePage(pagination.page - 1)"
+              >
+                Prev
+              </button>
+
+              <button
+                class="btn btn-sm btn-light"
+                :disabled="pagination.page >= pagination.totalPages"
+                @click="changePage(pagination.page + 1)"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>
       </div>
-      <!-- /Policylist list -->
-    </div>
-
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
     </div>
   </div>
-  <!-- /Page Wrapper -->
-  <policy-modal></policy-modal>
+
+  <policy-modal @refresh="fetchPolicies" />
 </template>
-<script>
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Name",
-    dataIndex: "Name",
-    key: "Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Name.toLowerCase();
-        b = b.Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Department",
-    dataIndex: "Department",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Department.toLowerCase();
-        b = b.Department.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Description",
-    dataIndex: "Description",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Description.toLowerCase();
-        b = b.Description.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Created Date",
-    dataIndex: "CreatedDate",
-    sorter: {
-      compare: (a, b) => {
-        a = a.CreatedDate.toLowerCase();
-        b = b.CreatedDate.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-const data = [
-  {
-    key: "1",
-    Name: "Employee",
-    Department: "All Department",
-    Description: "Guidelines regarding employee absences from work",
-    CreatedDate: "14 Jan 2024",
-  },
-  {
-    key: "2",
-    Name: "Permission Policy",
-    Department: "Marketing",
-    Description: "Guidelines for accessing and using company resources",
-    CreatedDate: "21 Jan 2024",
-  },
-  {
-    key: "3",
-    Name: "Privacy Policy",
-    Department: "All Department",
-    Description: "Ensure compliance with data protection",
-    CreatedDate: "18 Feb 2024",
-  },
-];
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
-import moment from "moment";
-import DateRangePicker from "daterangepicker";
-export default {
-  data() {
-    return {
-      title: "Policies",
-      text: "Employees",
-      text1: "Policies",
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
-      currentPage: 1,
-      pageSize: 10,
-    };
-  },
-  computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.Name.toLowerCase().includes(query) ||
-          record.Department.toLowerCase().includes(query) ||
-          record.Description.toLowerCase().includes(query) ||
-          record.CreatedDate.toLowerCase().includes(query)
-        );
-      });
-    },
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
-    },
-  },
-  setup() {
-    const dateRangeInput = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
+<script setup>
+import { ref, reactive, onMounted } from "vue";
+import api from "@/services/api"; 
+import debounce from "lodash/debounce";
 
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
+// --------------------
+// State
+// --------------------
+const title = "Policies";
+const text = "Employees";
+const text1 = "Policies";
 
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
+const policies = ref([]);
+const departments = ref([]);
+const loading = ref(false);
+const error = ref(null);
 
-        booking_range(start, end);
-      }
+// Filters
+const filters = reactive({
+  page: 1,
+  limit: 10,
+  search: "",
+  departmentId: "",
+  sortOrder: "DESC",
+});
+
+// Pagination
+const pagination = reactive({
+  page: 1,
+  total: 0,
+  totalPages: 1,
+  from: 0,
+  to: 0,
+});
+
+// --------------------
+// API Calls
+// --------------------
+const fetchPolicies = async () => {
+  try {
+    loading.value = true;
+    error.value = null;
+
+    const { data } = await api.get("/policies", {
+      params: filters,
     });
 
-    return {
-      dateRangeInput,
-    };
-  },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
-    },
-  },
+    policies.value = data.items;
+
+    pagination.total = data.total;
+    pagination.page = filters.page;
+    pagination.totalPages = Math.ceil(data.total / filters.limit);
+    pagination.from = (filters.page - 1) * filters.limit + 1;
+    pagination.to = Math.min(filters.page * filters.limit, data.total);
+  } catch (err) {
+    error.value = err.response?.data?.message || "Failed to load policies";
+  } finally {
+    loading.value = false;
+  }
 };
+
+const fetchDepartments = async () => {
+  try {
+    const { data } = await api.get("/departments");
+    departments.value = data.items || data;
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+// --------------------
+// Actions
+// --------------------
+const acknowledge = async (id) => {
+  try {
+    await api.post(`/policies/${id}/acknowledge`);
+    fetchPolicies();
+  } catch (err) {
+    alert(err.response?.data?.message || "Failed to acknowledge");
+  }
+};
+
+const deletePolicy = async (id) => {
+  if (!confirm("Are you sure you want to delete this policy?")) return;
+
+  try {
+    await api.delete(`/policies/${id}`);
+    fetchPolicies();
+  } catch (err) {
+    alert(err.response?.data?.message || "Delete failed");
+  }
+};
+
+const editPolicy = (policy) => {
+  // Emit or open modal with data
+  console.log("Edit:", policy);
+};
+
+// --------------------
+// Pagination
+// --------------------
+const changePage = (page) => {
+  filters.page = page;
+  fetchPolicies();
+};
+
+// --------------------
+// Utils
+// --------------------
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString();
+};
+
+// Debounce search
+const debouncedFetch = debounce(() => {
+  filters.page = 1;
+  fetchPolicies();
+}, 500);
+
+// --------------------
+// Lifecycle
+// --------------------
+onMounted(() => {
+  fetchPolicies();
+  fetchDepartments();
+});
 </script>
