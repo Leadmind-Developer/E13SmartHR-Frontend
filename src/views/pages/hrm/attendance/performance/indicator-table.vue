@@ -1,9 +1,120 @@
+<script>
+import api from "@/services/api";
+
+export default {
+  name: "IndicatorTable",
+
+  data() {
+    return {
+      indicators: [],
+      loading: false,
+      error: null,
+
+      searchQuery: "",
+      currentPage: 1,
+      pageSize: 10,
+      total: 0,
+
+      selectedRowKeys: [],
+    };
+  },
+
+  computed: {
+    totalPages() {
+      return Math.ceil(this.total / this.pageSize) || 1;
+    },
+  },
+
+  watch: {
+    searchQuery() {
+      this.currentPage = 1;
+      this.fetchIndicators();
+    },
+
+    pageSize() {
+      this.currentPage = 1;
+      this.fetchIndicators();
+    },
+  },
+
+  mounted() {
+    this.fetchIndicators();
+  },
+
+  methods: {
+    // -----------------------------
+    // API Fetch (Goals as Indicators)
+    // -----------------------------
+    async fetchIndicators() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const { data } = await api.get("/goal", {
+          params: {
+            page: this.currentPage,
+            limit: this.pageSize,
+            search: this.searchQuery,
+          },
+        });
+
+        // Backend returns: { success, data, count }
+        this.indicators = data?.data || [];
+        this.total = data?.count || 0;
+      } catch (err) {
+        this.error = err.response?.data?.message || err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // -----------------------------
+    // Pagination
+    // -----------------------------
+    changePage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+      this.fetchIndicators();
+    },
+
+    // -----------------------------
+    // Selection
+    // -----------------------------
+    onSelectChange(selectedRowKeys) {
+      this.selectedRowKeys = selectedRowKeys;
+    },
+
+    // -----------------------------
+    // Helpers
+    // -----------------------------
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
+    },
+
+    getStatusClass(status) {
+      switch ((status || "").toLowerCase()) {
+        case "active":
+          return "badge-success";
+        case "inactive":
+          return "badge-secondary";
+        case "pending":
+          return "badge-warning";
+        default:
+          return "badge-light";
+      }
+    },
+  },
+};
+</script>
+
 <template>
   <div class="card-body p-0">
-    <!-- Top Controls -->
+
+    <!-- Controls -->
     <div class="row mb-3">
       <div class="col-sm-12 col-md-6">
-        <label>
+        <label class="form-label">
           Rows per page
           <select v-model="pageSize" class="form-select form-select-sm">
             <option :value="10">10</option>
@@ -14,269 +125,139 @@
         </label>
       </div>
 
-      <div class="col-sm-12 col-md-6 text-end">
+      <div class="col-sm-12 col-md-6 text-md-end">
         <input
           v-model="searchQuery"
           type="search"
           class="form-control form-control-sm"
-          placeholder="Search appraisals..."
+          placeholder="Search goals..."
         />
       </div>
     </div>
 
+    <!-- Loading / Error -->
+    <div v-if="loading" class="text-center py-4">
+      <span class="spinner-border"></span>
+    </div>
+
+    <div v-if="error" class="alert alert-danger">
+      {{ error }}
+    </div>
+
     <!-- Table -->
-    <div class="table-responsive">
+    <div class="table-responsive" v-if="!loading">
       <a-table
-        :columns="columns"
-        :data-source="paginatedData"
-        :row-key="(record) => record.id"
-        :loading="loading"
+        :data-source="indicators"
+        :row-selection="{
+          selectedRowKeys,
+          onChange: onSelectChange,
+        }"
+        rowKey="id"
         :pagination="false"
       >
-        <template #bodyCell="{ column, record }">
+        <!-- Columns -->
+        <a-table-column title="Goal" data-index="title" key="title" />
 
-          <!-- Employee -->
-          <template v-if="column.key === 'employee'">
-            <div class="d-flex align-items-center">
-              <div class="ms-2">
-                <h6 class="mb-0">
-                  {{ record.User?.name || "N/A" }}
-                </h6>
-                <small>{{ record.User?.email }}</small>
-              </div>
-            </div>
+        <a-table-column title="Type" data-index="type" key="type" />
+
+        <a-table-column title="Owner" key="owner">
+          <template #default="{ record }">
+            {{ record.user?.name || "N/A" }}
           </template>
+        </a-table-column>
 
-          <!-- Department -->
-          <template v-if="column.key === 'department'">
-            {{ record.departmentId }}
+        <a-table-column title="Target" data-index="target" key="target" />
+
+        <a-table-column title="Progress" key="progress">
+          <template #default="{ record }">
+            {{ record.progress || 0 }}%
           </template>
+        </a-table-column>
 
-          <!-- Score -->
-          <template v-if="column.key === 'score'">
-            <span class="fw-bold">
-              {{ record.overallScore?.toFixed(2) || "0.00" }}
+        <a-table-column title="Status" key="status">
+          <template #default="{ record }">
+            <span :class="['badge', getStatusClass(record.status)]">
+              {{ record.status || "N/A" }}
             </span>
           </template>
+        </a-table-column>
 
-          <!-- Status -->
-          <template v-if="column.key === 'status'">
-            <span :class="statusClass(record.status)">
-              {{ record.status }}
-            </span>
-          </template>
-
-          <!-- Approval Stage -->
-          <template v-if="column.key === 'stage'">
-            <span class="badge bg-info">
-              {{ record.approvalStage }}
-            </span>
-          </template>
-
-          <!-- Date -->
-          <template v-if="column.key === 'date'">
+        <a-table-column title="Created" key="createdAt">
+          <template #default="{ record }">
             {{ formatDate(record.createdAt) }}
           </template>
+        </a-table-column>
 
-          <!-- Actions -->
-          <template v-if="column.key === 'action'">
-            <div class="d-flex gap-2">
-              <button
-                class="btn btn-sm btn-outline-primary"
-                @click="viewAppraisal(record.id)"
+        <a-table-column title="Actions" key="actions">
+          <template #default="{ record }">
+            <div class="action-icon d-inline-flex">
+              <a
+                href="javascript:void(0);"
+                class="me-2"
+                data-bs-toggle="modal"
+                data-bs-target="#edit_goal_modal"
               >
-                View
-              </button>
+                <i class="ti ti-edit"></i>
+              </a>
 
-              <button
-                v-if="record.status !== 'COMPLETED'"
-                class="btn btn-sm btn-success"
-                @click="approve(record.id)"
+              <a
+                href="javascript:void(0);"
+                data-bs-toggle="modal"
+                data-bs-target="#delete_goal_modal"
               >
-                Approve
-              </button>
-
-              <button
-                v-if="record.status !== 'REJECTED'"
-                class="btn btn-sm btn-danger"
-                @click="reject(record.id)"
-              >
-                Reject
-              </button>
+                <i class="ti ti-trash"></i>
+              </a>
             </div>
           </template>
-
-        </template>
+        </a-table-column>
       </a-table>
     </div>
 
     <!-- Pagination -->
-    <div class="d-flex justify-content-between mt-3">
-      <div>
-        Showing {{ startItem }} - {{ endItem }} of {{ filteredData.length }}
+    <div class="row mt-3" v-if="!loading">
+      <div class="col-md-5">
+        <div>
+          Showing
+          {{ (currentPage - 1) * pageSize + 1 }}
+          -
+          {{ Math.min(currentPage * pageSize, total) }}
+          of {{ total }}
+        </div>
       </div>
 
-      <div>
-        <button
-          class="btn btn-sm btn-light"
-          :disabled="currentPage === 1"
-          @click="currentPage--"
-        >
-          Prev
-        </button>
+      <div class="col-md-7 text-end">
+        <ul class="pagination justify-content-end">
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === 1 }"
+          >
+            <a class="page-link" @click.prevent="changePage(currentPage - 1)">
+              ‹
+            </a>
+          </li>
 
-        <span class="mx-2">
-          Page {{ currentPage }} / {{ totalPages }}
-        </span>
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: page === currentPage }"
+          >
+            <a class="page-link" @click.prevent="changePage(page)">
+              {{ page }}
+            </a>
+          </li>
 
-        <button
-          class="btn btn-sm btn-light"
-          :disabled="currentPage === totalPages"
-          @click="currentPage++"
-        >
-          Next
-        </button>
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === totalPages }"
+          >
+            <a class="page-link" @click.prevent="changePage(currentPage + 1)">
+              ›
+            </a>
+          </li>
+        </ul>
       </div>
     </div>
+
   </div>
 </template>
-
-<script>
-import api from "@/services/api";
-
-export default {
-  name: "IndicatorTable",
-
-  data() {
-    return {
-      appraisals: [],
-      loading: false,
-
-      searchQuery: "",
-      currentPage: 1,
-      pageSize: 10,
-
-      columns: [
-        { title: "Employee", key: "employee" },
-        { title: "Department", key: "department" },
-        { title: "Score", key: "score" },
-        { title: "Status", key: "status" },
-        { title: "Stage", key: "stage" },
-        { title: "Created", key: "date" },
-        { title: "Actions", key: "action" },
-      ],
-    };
-  },
-
-  computed: {
-    filteredData() {
-      const q = this.searchQuery.toLowerCase();
-
-      return this.appraisals.filter((a) => {
-        return (
-          a.User?.name?.toLowerCase().includes(q) ||
-          a.status?.toLowerCase().includes(q) ||
-          a.approvalStage?.toLowerCase().includes(q)
-        );
-      });
-    },
-
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredData.slice(start, start + this.pageSize);
-    },
-
-    totalPages() {
-      return Math.ceil(this.filteredData.length / this.pageSize) || 1;
-    },
-
-    startItem() {
-      return (this.currentPage - 1) * this.pageSize + 1;
-    },
-
-    endItem() {
-      return Math.min(
-        this.currentPage * this.pageSize,
-        this.filteredData.length
-      );
-    },
-  },
-
-  watch: {
-    searchQuery() {
-      this.currentPage = 1;
-    },
-    pageSize() {
-      this.currentPage = 1;
-    },
-  },
-
-  methods: {
-    async fetchAppraisals() {
-      this.loading = true;
-      try {
-        const res = await api.get("/performance/appraisals");
-        this.appraisals = res.data.data || [];
-      } catch (err) {
-        console.error(err);
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async approve(id) {
-      try {
-        await api.patch(`/performance/appraisals/${id}/status`, {
-          action: "APPROVE",
-        });
-        this.fetchAppraisals();
-      } catch (err) {
-        console.error(err);
-      }
-    },
-
-    async reject(id) {
-      try {
-        await api.patch(`/performance/appraisals/${id}/status`, {
-          action: "REJECT",
-        });
-        this.fetchAppraisals();
-      } catch (err) {
-        console.error(err);
-      }
-    },
-
-    viewAppraisal(id) {
-      this.$router.push(`/hrm/performance/appraisals/${id}`);
-    },
-
-    statusClass(status) {
-      switch (status) {
-        case "COMPLETED":
-          return "badge bg-success";
-        case "IN_REVIEW":
-          return "badge bg-warning";
-        case "REJECTED":
-          return "badge bg-danger";
-        default:
-          return "badge bg-secondary";
-      }
-    },
-
-    formatDate(date) {
-      if (!date) return "-";
-      return new Date(date).toLocaleDateString();
-    },
-  },
-
-  mounted() {
-    this.fetchAppraisals();
-  },
-};
-</script>
-
-<style scoped>
-.table-responsive {
-  overflow-x: auto;
-}
-</style>
