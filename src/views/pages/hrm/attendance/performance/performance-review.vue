@@ -1,1161 +1,247 @@
 <script>
+import api from "@/services/api";
+
 export default {
-    data() {
-        return {
-            title: "Performance Review",
-            text: "Performance",
-            text1: "Performance Review"
-        }
+  name: "PerformanceReview",
+
+  data() {
+    return {
+      title: "Performance Review",
+      text: "Performance",
+      text1: "Performance Review",
+
+      loading: false,
+      submitting: false,
+
+      appraisalId: this.$route.params.id || null,
+
+      appraisal: null,
+      scores: [],
+      review360: null,
+
+      form: {
+        status: "",
+      },
+    };
+  },
+
+  async mounted() {
+    if (this.appraisalId) {
+      await this.fetchAppraisal();
+      await this.fetch360();
+    }
+  },
+
+  computed: {
+    totalScore() {
+      if (!this.scores.length) return 0;
+      const sum = this.scores.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
+      return (sum / this.scores.length).toFixed(2);
     },
-    methods: {
-        toggleHeader() {
-            document.getElementById("collapse-header").classList.toggle("active");
-            document.body.classList.toggle("header-collapse");
-        },
+  },
+
+  methods: {
+    toggleHeader() {
+      document
+        .getElementById("collapse-header")
+        ?.classList.toggle("active");
+      document.body.classList.toggle("header-collapse");
     },
-}
+
+    // -----------------------------
+    // Fetch Appraisal
+    // -----------------------------
+    async fetchAppraisal() {
+      this.loading = true;
+      try {
+        const res = await api.get(`/appraisals/${this.appraisalId}`);
+        this.appraisal = res.data.data;
+
+        this.scores = this.appraisal?.scores || [];
+      } catch (err) {
+        console.error(err);
+        this.$toast?.error("Failed to load appraisal");
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    // -----------------------------
+    // Fetch 360 Review
+    // -----------------------------
+    async fetch360() {
+      try {
+        const res = await api.get(`/appraisals/${this.appraisalId}/360`);
+        this.review360 = res.data.data;
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    // -----------------------------
+    // Update KPI Score
+    // -----------------------------
+    updateScore(index, value) {
+      this.scores[index].score = Number(value);
+    },
+
+    // -----------------------------
+    // Approval Action
+    // -----------------------------
+    async handleApproval(action) {
+      this.submitting = true;
+
+      try {
+        await api.patch(`/appraisals/${this.appraisalId}/status`, {
+          action,
+        });
+
+        this.$toast?.success(`Appraisal ${action.toLowerCase()}ed`);
+
+        await this.fetchAppraisal();
+      } catch (err) {
+        console.error(err);
+        this.$toast?.error("Action failed");
+      } finally {
+        this.submitting = false;
+      }
+    },
+  },
+};
 </script>
 
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <div class="page-wrapper">
+    <div class="content">
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <breadcrumb :title="title" :text="text" :text1="text1" />
-                <div class="head-icons ms-2">
-                    <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-                        <i class="ti ti-chevrons-up"></i>
-                    </a>
-                </div>
-            </div>
-            <!-- /Breadcrumb -->
+      <!-- Breadcrumb -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <breadcrumb :title="title" :text="text" :text1="text1" />
 
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Employee Basic Information</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12 col-sm-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-nowrap mb-0">
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <form>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="name">Name</label>
-                                                    <input type="text" class="form-control" id="name">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="depart3">Department</label>
-                                                    <input type="text" class="form-control" id="depart3">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="departa">Designation</label>
-                                                    <input type="text" class="form-control" id="departa">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="qualif">Qualification: </label>
-                                                    <input type="text" class="form-control" id="qualif">
-                                                </div>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <form>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="eid">Emp ID</label>
-                                                    <input type="text" class="form-control" id="eid" value="DGT-009">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="doj">Date of Join</label>
-                                                    <input type="text" class="form-control" id="doj">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="doc">Date of Confirmation</label>
-                                                    <input type="text" class="form-control" id="doc">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="qualif1">Previous years of Exp</label>
-                                                    <input type="text" class="form-control" id="qualif1">
-                                                </div>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <form>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="name1"> RO's Name</label>
-                                                    <input type="text" class="form-control" id="name1">
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label class="form-label" for="depart1"> RO Designation: </label>
-                                                    <input type="text" class="form-control" id="depart1">
-                                                </div>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>	 
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Professional Excellence</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Key Result Area</th>
-                                        <th>Key Performance Indicators</th>
-                                        <th>Weightage</th>
-                                        <th>Percentage achieved <br>( self Score )</th>
-                                        <th>Points Scored <br>( self )</th>
-                                        <th>Percentage achieved <br>( RO's Score )</th>
-                                        <th>Points Scored <br>( RO )</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td rowspan="2">1</td>
-                                        <td rowspan="2">Production</td>
-                                        <td>Quality</td>
-                                        <td><input type="text" class="form-control" readonly value="30"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>TAT (turn around time)</td>
-                                        <td><input type="text" class="form-control" readonly value="30"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Process Improvement</td>
-                                        <td>PMS,New Ideas</td>
-                                        <td><input type="text" class="form-control" readonly value="10"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>Team Management</td>
-                                        <td>Team Productivity,dynaics,attendance,attrition</td>
-                                        <td><input type="text" class="form-control" readonly value="5"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td>Knowledge Sharing</td>
-                                        <td>Sharing the knowledge for team productivity </td>
-                                        <td><input type="text" class="form-control" readonly value="5"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td>Reporting and Communication</td>
-                                        <td>Emails/Calls/Reports and Other Communication</td>
-                                        <td><input type="text" class="form-control" readonly value="5"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="text-center">Total </td>
-                                        <td><input type="text" class="form-control" readonly value="85"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Personal Excellence</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Personal Attributes</th>
-                                        <th>Key Indicators</th>
-                                        <th>Weightage</th>
-                                        <th>Percentage achieved <br>( self Score )</th>
-                                        <th>Points Scored <br>( self )</th>
-                                        <th>Percentage achieved <br>( RO's Score )</th>
-                                        <th>Points Scored <br>( RO )</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td rowspan="2">1</td>
-                                        <td rowspan="2">Attendance</td>
-                                        <td>Planned or Unplanned Leaves</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Time Consciousness</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td rowspan="2">2</td>
-                                        <td rowspan="2">Attitude & Behavior</td>
-                                        <td>Team Collaboration</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Professionalism & Responsiveness</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>Policy & Procedures </td>
-                                        <td>Adherence to policies and procedures</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                    <td>4</td>
-                                        <td>Initiatives</td>
-                                        <td>Special Efforts, Suggestions,Ideas,etc.</td>
-                                        <td><input type="text" class="form-control" readonly value="2"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td>Continuous Skill Improvement</td>
-                                        <td>Preparedness to move to next level & Training utilization</td>
-                                        <td><input type="text" class="form-control" readonly value="3"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="text-center">Total </td>
-                                        <td><input type="text" class="form-control" readonly value="15"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                        <td><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="text-center"><b>Total Percentage(%)</b></td>
-                                        <td colspan="5" class="text-center"><input type="text" class="form-control" readonly value="0"></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="8" class="text-center">
-                                            <div class="grade-span">
-                                                <h4>Grade</h4>
-                                                <span class="badge bg-inverse-danger">Below 65 Poor</span> 
-                                                <span class="badge bg-inverse-warning">65-74 Average</span> 
-                                                <span class="badge bg-inverse-info">75-84 Satisfactory</span> 
-                                                <span class="badge bg-inverse-purple">85-92 Good</span> 
-                                                <span class="badge bg-inverse-success">Above 92 Excellent</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <div class="head-icons ms-2">
+          <a
+            href="javascript:void(0);"
+            id="collapse-header"
+            data-bs-toggle="tooltip"
+            title="Collapse"
+            @click="toggleHeader"
+          >
+            <i class="ti ti-chevrons-up"></i>
+          </a>
+        </div>
+      </div>
 
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Special Initiatives, Achievements, contributions if any</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-review mb-0" id="table_achievements">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>By Self</th>
-                                        <th>RO's Comment</th>
-                                        <th>HOD's Comment</th>
-                                        <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table_achievements_tbody">
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Comments on the role</h3>
-                    <p class="text-muted">alterations if any requirred like addition/deletion of responsibilities</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0" id="table_alterations">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>By Self</th>
-                                        <th>RO's Comment</th>
-                                        <th>HOD's Comment</th>
-                                        <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table_alterations_tbody">
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Comments on the role</h3>
-                    <p class="text-muted">alterations if any requirred like addition/deletion of responsibilities</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Strengths</th>
-                                        <th>Area's for Improvement</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Appraisee's Strengths and Areas for Improvement perceived by the Reporting officer</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Strengths</th>
-                                        <th>Area's for Improvement</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Appraisee's Strengths and Areas for Improvement perceived by the Head of the Department</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Strengths</th>
-                                        <th>Area's for Improvement</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Personal Goals</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Goal Achieved during last year</th>
-                                        <th>Goal set for current year</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Personal Updates</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>Last Year</th>
-                                        <th>Yes/No</th>
-                                        <th>Details</th>
-                                        <th>Current Year</th>
-                                        <th>Yes/No</th>
-                                        <th>Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Married/Engaged?</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>	
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td>Marriage Plans</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Higher Studies/Certifications?</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td>Plans For Higher Study</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Health Issues?</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td>Certification Plans</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>Others</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td>Others</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Professional Goals Achieved for last year</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0" id="table_goals">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>By Self</th>
-                                        <th>RO's Comment</th>
-                                        <th>HOD's Comment</th>
-                                        <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table_goals_tbody">
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Professional Goals for the forthcoming year</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0" id="table_forthcoming">
-                                <thead>
-                                    <tr>
-                                        <th class="width-pixel">#</th>
-                                        <th>By Self</th>
-                                        <th>RO's Comment</th>
-                                        <th>HOD's Comment</th>
-                                        <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table_forthcoming_tbody">
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Training Requirements</h3>
-                    <p class="text-muted">if any to achieve the Performance Standard Targets completely</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0" id="table_targets">
-                                <thead>
-                                    <tr>
-                                    <th class="width-pixel">#</th>
-                                    <th>By Self</th>
-                                    <th>RO's Comment</th>
-                                    <th>HOD's Comment</th>
-                                    <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="table_targets_tbody">
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+      <!-- Loader -->
+      <div v-if="loading" class="text-center py-5">
+        Loading appraisal...
+      </div>
 
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">Any other general comments, observations, suggestions etc.</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0" id="general_comments">
-                                <thead>
-                                    <tr>
-                                    <th class="width-pixel">#</th>
-                                    <th>Self</th>
-                                    <th>RO</th>
-                                    <th>HOD</th>
-                                    <th class="width-64"><button type="button" class="btn btn-primary btn-sm btn-add-row"><i class="fa-solid fa-plus"></i></button></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="general_comments_tbody" >
-                                    <tr>
-                                        <td>1</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>4</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td>5</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+      <!-- Appraisal Content -->
+      <div v-if="appraisal">
 
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">For RO's Use Only</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>Yes/No</th>
-                                        <th>If Yes - Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>The Team member has Work related Issues</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>The Team member has Leave Issues</td>
-                                        <td>
-                                        <select class="form-control select">
-                                            <option>Select</option>
-                                            <option>Yes</option>
-                                            <option>No</option>
-                                        </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>The team member has Stability Issues</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>The Team member exhibits non-supportive attitude</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Any other points in specific to note about the team member</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                    <td>Overall Comment /Performance of the team member</td>
-                                        <td>
-                                            <select class="form-control select">
-                                                <option>Select</option>
-                                                <option>Yes</option>
-                                                <option>No</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            
-            <section class="card border-0">
-                <div class="card-header border border-bottom-0 text-center">
-                    <h3 class="mb-2">For HRD's Use Only</h3>
-                    <p class="text-muted">Lorem ipsum dollar</p>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Overall Parameters</th>
-                                        <th>Available Points</th>
-                                        <th>Points Scored</th>
-                                        <th>RO's Comment</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>KRAs Target Achievement Points (will be considered from the overall score specified in this document by the Reporting officer)</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Professional Skills Scores(RO's Points furnished in the skill & attitude assessment sheet will be considered)</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Personal Skills Scores(RO's Points furnished in the skill & attitude assessment sheet will be considered)</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Special Achievements Score (HOD to furnish)</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                    <tr>
-                                        <td>Overall Total Score</td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                        <td><input type="text" class="form-control" ></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- Employee Info -->
+        <section class="card border-0">
+          <div class="card-header text-center">
+            <h3 class="mb-2">Employee Information</h3>
+          </div>
 
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="table-responsive">
-                        <table class="table table-bordered mb-0">
-                            <thead>
-                                <tr>
-                                    <th></th>
-                                    <th>Name</th>
-                                    <th>Signature</th>
-                                    <th>Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Employee</td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                </tr>
-                                <tr>
-                                    <td>Reporting Officer</td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                </tr>
-                                <tr>
-                                    <td>HOD</td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                </tr>
-                                <tr>
-                                    <td>HRD</td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                    <td><input type="text" class="form-control" ></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+          <div class="card-body row">
+            <div class="col-md-4">
+              <p><strong>Name:</strong> {{ appraisal.employee?.name }}</p>
+              <p><strong>Department:</strong> {{ appraisal.departmentId }}</p>
             </div>
 
-        </div>
+            <div class="col-md-4">
+              <p><strong>Reviewer:</strong> {{ appraisal.reviewer?.name }}</p>
+              <p><strong>Status:</strong> {{ appraisal.status }}</p>
+            </div>
 
-        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-            <p class="mb-0">{{new Date().getFullYear()}} &copy; SmartHR.</p>
-            <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
-        </div>
+            <div class="col-md-4">
+              <p><strong>Date:</strong> {{ appraisal.appraisalDate }}</p>
+            </div>
+          </div>
+        </section>
 
+        <!-- KPI Scores -->
+        <section class="card border-0">
+          <div class="card-header text-center">
+            <h3>KPI Scores</h3>
+          </div>
+
+          <div class="card-body table-responsive">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Indicator</th>
+                  <th>Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(score, index) in scores" :key="index">
+                  <td>{{ score.indicatorId }}</td>
+                  <td>
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="score.score"
+                      @input="updateScore(index, $event.target.value)"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="mt-3">
+              <strong>Total Average Score: </strong> {{ totalScore }}
+            </div>
+          </div>
+        </section>
+
+        <!-- 360 Review -->
+        <section class="card border-0" v-if="review360">
+          <div class="card-header text-center">
+            <h3>360 Review Summary</h3>
+          </div>
+
+          <div class="card-body">
+            <pre>{{ review360 }}</pre>
+          </div>
+        </section>
+
+        <!-- Actions -->
+        <section class="card border-0">
+          <div class="card-body text-end">
+
+            <button
+              class="btn btn-success me-2"
+              :disabled="submitting"
+              @click="handleApproval('APPROVE')"
+            >
+              Approve
+            </button>
+
+            <button
+              class="btn btn-danger"
+              :disabled="submitting"
+              @click="handleApproval('REJECT')"
+            >
+              Reject
+            </button>
+
+          </div>
+        </section>
+
+      </div>
     </div>
-    <!-- /Page Wrapper -->
+
+    <!-- Footer -->
+    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+      <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
+      <p>Designed & Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+    </div>
+
+  </div>
 </template>
