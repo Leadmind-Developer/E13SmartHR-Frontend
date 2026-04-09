@@ -42,7 +42,7 @@ export default {
     // -------------------------
     const fetchStats = async () => {
       try {
-        const { data } = await api.get("/hrm/overtime/stats", {
+        const { data } = await api.get("/overtime/stats", {
           params: {
             startDate: filters.startDate,
             endDate: filters.endDate,
@@ -65,7 +65,7 @@ export default {
       error.value = null;
 
       try {
-        const { data } = await api.get("/hrm/overtime", {
+        const { data } = await api.get("/overtime", {
           params: {
             startDate: filters.startDate,
             endDate: filters.endDate,
