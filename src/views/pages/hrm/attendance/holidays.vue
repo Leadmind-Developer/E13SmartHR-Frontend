@@ -1,223 +1,135 @@
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
-    <FullCalendar :options="calendarOptions" />
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <layout-header />
+  <layout-sidebar />
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <div class="my-auto mb-2">
-                    <h2 class="mb-1">Holidays</h2>
-                    <nav>
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                <router-link to="/dashboard"><i class="ti ti-smart-home"></i></router-link>
-                            </li>
-                            <li class="breadcrumb-item">
-                                Attendance
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">Holidays</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-                    <div class="mb-2 me-2">
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-file-export me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
-                                </li>
-                            </ul>
-                        </div>
+  <div class="page-wrapper">
+    <div class="content">
 
-                    </div>
-                    <div class="mb-2">
-                        <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_modal"
-                            class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add
-                            New Holiday</a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Breadcrumb -->
-
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                    <h5>Holiday List</h5>
-                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                        <div class="me-3">
-                            <div class="input-icon position-relative">
-                                <span class="input-icon-addon">
-                                    <i class="ti ti-calendar text-gray-9"></i>
-                                </span>
-                                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                                    placeholder="dd/mm/yyyy - dd/mm/yyyy">
-                            </div>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Designation
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Accountant</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">App Developer</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Technician</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Web Developer</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Shift
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Regular</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Night</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Status
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Active</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Inactive</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-filter me-1"></i>Filter
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">All Holidays</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">National Holidays</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Company Holidays</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <div class="table-responsive">
-                            <table class="custom-table table-hover table-nowrap mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="" id="flexCheck">
-                                            </div>
-                                        </th>
-                                        <th>Holiday Name</th>
-                                        <th>Holiday Date</th>
-                                        <th>Day</th>
-                                        <th>Holiday Type</th>
-                                        <th>Status</th>
-                                        <th class="text-end">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="item in holidays" :key="item.id">
-                                        <td>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="" id="flexCheck">
-                                            </div>
-                                        </td>
-                                       <td>{{ item.title }}</td>
-                                        <td>{{ item.date }}</td>
-                                        <td>{{ item.day }}</td>
-                                        <td>
-                                            <span
-                                               class="badge"
-                                               :class="item.type === 'national' ? 'badge-light-danger' : 'badge-light-info'"
-                                          >
-                                               {{ item.type }}
-                                           </span>
-                                        </td>
-                                        <td>
-                                            <span
-                                                class="badge"
-                                                :class="item.status === 'active' ? 'badge-light-success' : 'badge-light-secondary'"
-                                            >
-                                                {{ item.status }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end">
-                                            <div class="dropdown dropdown-action">
-                                                <a href="javascript:void(0);"
-                                                    class="dropdown-toggle text-gray-700 d-inline-flex align-items-center"
-                                                    data-bs-toggle="dropdown">
-                                                    <i class="ti ti-dots-vertical"></i>
-                                                </a>
-                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                    <li>
-                                                        <a class="dropdown-item" href="javascript:void(0)"
-                                                            data-bs-toggle="modal" data-bs-target="#edit_modal">
-                                                            <i class="ti ti-pencil me-2"></i>Edit</a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" @click="deleteHoliday(item.id)">
-                                                            data-bs-toggle="modal" data-bs-target="#delete_modal">
-                                                            <i class="ti ti-trash me-2"></i>Delete</a>
-                                                    </li>
-                                                </ul>
-                                                <input type="file" @change="uploadFile" />
-                                                <button @click="approveHoliday(item.id)">Approve</button>
-                                               <button @click="publishHoliday(item.id)">Publish</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <!-- Breadcrumb -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div>
+          <h2 class="mb-1">Holidays</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <router-link to="/dashboard">
+                  <i class="ti ti-smart-home"></i>
+                </router-link>
+              </li>
+              <li class="breadcrumb-item">Attendance</li>
+              <li class="breadcrumb-item active">Holidays</li>
+            </ol>
+          </nav>
         </div>
+
+        <div class="d-flex align-items-center gap-2">
+          <button class="btn btn-primary" @click="showCreateModal = true">
+            <i class="ti ti-circle-plus me-2"></i> Add Holiday
+          </button>
+
+          <input type="file" class="form-control" @change="uploadFile" />
+        </div>
+      </div>
+
+      <!-- Calendar View -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <FullCalendar :options="calendarOptions" />
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap gap-3">
+
+          <select v-model="filters.type" class="form-select w-auto" @change="fetchHolidays">
+            <option value="">All Types</option>
+            <option value="national">National</option>
+            <option value="company">Company</option>
+          </select>
+
+          <select v-model="filters.status" class="form-select w-auto" @change="fetchHolidays">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          <input type="date" v-model="filters.startDate" class="form-control w-auto" @change="fetchHolidays" />
+          <input type="date" v-model="filters.endDate" class="form-control w-auto" @change="fetchHolidays" />
+
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card">
+        <div class="card-header">
+          <h5>Holiday List</h5>
+        </div>
+
+        <div class="card-body table-responsive">
+          <table class="custom-table table-hover table-nowrap mb-0">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Date</th>
+                <th>Day</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="item in holidays" :key="item.id">
+                <td>{{ item.title }}</td>
+                <td>{{ item.date }}</td>
+                <td>{{ item.day }}</td>
+
+                <td>
+                  <span class="badge" :class="item.type === 'national' ? 'badge-light-danger' : 'badge-light-info'">
+                    {{ item.type }}
+                  </span>
+                </td>
+
+                <td>
+                  <span class="badge" :class="item.status === 'active' ? 'badge-light-success' : 'badge-light-secondary'">
+                    {{ item.status }}
+                  </span>
+                </td>
+
+                <td class="text-end">
+                  <div class="d-flex justify-content-end gap-2">
+
+                    <button class="btn btn-sm btn-outline-primary" @click="editHoliday(item)">
+                      Edit
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-success" @click="approveHoliday(item.id)">
+                      Approve
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-warning" @click="publishHoliday(item.id)">
+                      Publish
+                    </button>
+
+                    <button class="btn btn-sm btn-outline-danger" @click="deleteHoliday(item.id)">
+                      Delete
+                    </button>
+
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import api from "@/services/api";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -225,23 +137,27 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 const holidays = ref([]);
 const loading = ref(false);
 
-// filters
 const filters = ref({
   type: "",
   status: "",
+  locationId: "",
   startDate: "",
   endDate: "",
 });
 
-// form
 const form = ref({
+  id: null,
   name: "",
   date: "",
   type: "company",
   status: "active",
 });
 
-// fetch
+const showCreateModal = ref(false);
+
+/**
+ * Fetch holidays
+ */
 const fetchHolidays = async () => {
   loading.value = true;
 
@@ -256,26 +172,40 @@ const fetchHolidays = async () => {
         weekday: "long",
       }),
     }));
+  } catch (err) {
+    console.error(err);
   } finally {
     loading.value = false;
   }
 };
 
-// create
-const createHoliday = async () => {
-  await api.post("/holidays", form.value);
+/**
+ * Create / Update
+ */
+const saveHoliday = async () => {
+  if (!form.value.name || !form.value.date) return;
+
+  if (form.value.id) {
+    await api.patch(`/holidays/${form.value.id}`, form.value);
+  } else {
+    await api.post("/holidays", form.value);
+  }
+
   resetForm();
   fetchHolidays();
 };
 
-// update
-const updateHoliday = async (id) => {
-  await api.patch(`/holidays/${id}`, form.value);
-  resetForm();
-  fetchHolidays();
+/**
+ * Edit
+ */
+const editHoliday = (item) => {
+  form.value = { ...item };
+  showCreateModal.value = true;
 };
 
-// delete
+/**
+ * Delete
+ */
 const deleteHoliday = async (id) => {
   if (!confirm("Delete this holiday?")) return;
 
@@ -283,32 +213,25 @@ const deleteHoliday = async (id) => {
   fetchHolidays();
 };
 
-const resetForm = () => {
-  form.value = {
-    name: "",
-    date: "",
-    type: "company",
-    status: "active",
-  };
+/**
+ * Approval
+ */
+const approveHoliday = async (id) => {
+  await api.patch(`/holidays/${id}`, { status: "approved" });
+  fetchHolidays();
 };
 
-const filters = ref({
-  type: "",
-  status: "",
-  locationId: "",
-  startDate: "",
-  endDate: "",
-});
-
-const calendarOptions = {
-  plugins: [dayGridPlugin],
-  initialView: "dayGridMonth",
-  events: holidays.value.map((h) => ({
-    title: h.title,
-    date: h.date,
-  })),
+/**
+ * Publish
+ */
+const publishHoliday = async (id) => {
+  await api.patch(`/holidays/${id}`, { status: "published" });
+  fetchHolidays();
 };
 
+/**
+ * Bulk Import
+ */
 const uploadFile = async (e) => {
   const formData = new FormData();
   formData.append("file", e.target.files[0]);
@@ -316,6 +239,36 @@ const uploadFile = async (e) => {
   await api.post("/holidays/import", formData);
   fetchHolidays();
 };
+
+/**
+ * Reset form
+ */
+const resetForm = () => {
+  form.value = {
+    id: null,
+    name: "",
+    date: "",
+    type: "company",
+    status: "active",
+  };
+  showCreateModal.value = false;
+};
+
+/**
+ * Calendar
+ */
+const calendarOptions = computed(() => ({
+  plugins: [dayGridPlugin],
+  initialView: "dayGridMonth",
+  events: holidays.value.map((h) => ({
+    title: h.title,
+    date: h.date,
+  })),
+}));
+
+watch(holidays, () => {
+  // ensures calendar updates reactively
+});
 
 onMounted(fetchHolidays);
 </script>
