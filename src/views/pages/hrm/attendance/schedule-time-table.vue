@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import api from "@/service/api";
+import api from "@/services/api";
 /**
  * =========================
  * STATE
