@@ -1,350 +1,301 @@
 <script>
-import { ref } from "vue";
-const valueOne = ref(new Date());
+import axios from "axios";
 
 export default {
-    data() {
-        return {
-            title: "Employee Attendance",
-            text: "Attendance",
-            text1: "Employee Attendance",
-            valueOne,
-        }
+  data() {
+    return {
+      title: "Employee Attendance",
+      text: "Attendance",
+      text1: "Employee Attendance",
+
+      loading: false,
+      records: [],
+      pagination: {
+        page: 1,
+        limit: 10,
+        total: 0,
+      },
+
+      todayRecord: null,
+      now: new Date(),
+      interval: null,
+    };
+  },
+
+  computed: {
+    isPunchedIn() {
+      return this.todayRecord && !this.todayRecord.checkOut;
     },
-    methods: {
-        toggleHeader() {
-            document.getElementById("collapse-header").classList.toggle("active");
-            document.body.classList.toggle("header-collapse");
-        },
+
+    workingMinutes() {
+      if (!this.todayRecord || !this.todayRecord.checkIn) return 0;
+
+      const start = new Date(this.todayRecord.checkIn);
+      const end = this.todayRecord.checkOut
+        ? new Date(this.todayRecord.checkOut)
+        : this.now;
+
+      return Math.floor((end - start) / 60000);
     },
-}
+
+    workingHoursFormatted() {
+      const hrs = Math.floor(this.workingMinutes / 60);
+      const mins = this.workingMinutes % 60;
+      return `${hrs}h ${mins}m`;
+    },
+  },
+
+  mounted() {
+    this.fetchAttendance();
+    this.startClock();
+  },
+
+  beforeUnmount() {
+    clearInterval(this.interval);
+  },
+
+  methods: {
+    toggleHeader() {
+      document.getElementById("collapse-header").classList.toggle("active");
+      document.body.classList.toggle("header-collapse");
+    },
+
+    startClock() {
+      this.interval = setInterval(() => {
+        this.now = new Date();
+      }, 1000);
+    },
+
+    async fetchAttendance() {
+      this.loading = true;
+      try {
+        const { data } = await axios.get("/attendance/me", {
+          params: {
+            page: this.pagination.page,
+            limit: this.pagination.limit,
+          },
+        });
+
+        this.records = data.data;
+        this.pagination = data.pagination;
+
+        // find today's record
+        const today = new Date().toISOString().split("T")[0];
+        this.todayRecord = this.records.find(r => r.date === today) || null;
+
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async punchIn() {
+      try {
+        await axios.post("/attendance/punch-in");
+        await this.fetchAttendance();
+      } catch (err) {
+        alert(err.response?.data?.message || "Punch in failed");
+      }
+    },
+
+    async punchOut() {
+      try {
+        await axios.post("/attendance/punch-out");
+        await this.fetchAttendance();
+      } catch (err) {
+        alert(err.response?.data?.message || "Punch out failed");
+      }
+    },
+
+    formatTime(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleTimeString();
+    },
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
+    },
+  },
+};
 </script>
 
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <div class="page-wrapper">
+    <div class="content">
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <breadcrumb :title="title" :text="text" :text1="text1" />
-                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-                    <div class="me-2 mb-2">
-                        <div class="d-flex align-items-center border bg-white rounded p-1 me-2">
-                            <router-link to="/attendance/attendance-admin"
-                                class="btn btn-icon btn-sm active bg-primary text-white me-1"><i
-                                    class="ti ti-brand-days-counter"></i></router-link>
-                            <router-link to="/attendance/attendance-admin" class="btn btn-icon btn-sm"><i
-                                    class="ti ti-calendar-event"></i></router-link>
-                        </div>
-                    </div>
-                    <div class="me-2 mb-2">
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-file-export me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <a href="javascript:void(0);" class="btn btn-primary d-flex align-items-center"
-                            data-bs-toggle="modal" data-bs-target="#attendance_report"><i
-                                class="ti ti-file-analytics me-2"></i>Report</a>
-                    </div>
-                    <div class="ms-2 head-icons">
-                        <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-                            data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-                            <i class="ti ti-chevrons-up"></i>
-                        </a>
-                    </div>
-                </div>
+      <!-- Breadcrumb -->
+      <div class="d-md-flex justify-content-between mb-3">
+        <breadcrumb :title="title" :text="text" :text1="text1" />
+
+        <div class="ms-2 head-icons">
+          <a href="javascript:void(0);" id="collapse-header" @click="toggleHeader">
+            <i class="ti ti-chevrons-up"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- TOP CARD -->
+      <div class="row">
+        <div class="col-xl-4 d-flex">
+          <div class="card flex-fill text-center">
+            <div class="card-body">
+
+              <h5 class="mb-2">
+                {{ now.toLocaleTimeString() }}
+              </h5>
+              <p class="text-muted">
+                {{ now.toDateString() }}
+              </p>
+
+              <div class="my-3">
+                <h6>Status:</h6>
+                <span
+                  class="badge"
+                  :class="isPunchedIn ? 'bg-success' : 'bg-secondary'"
+                >
+                  {{ isPunchedIn ? "Active Session" : "Not Punched In" }}
+                </span>
+              </div>
+
+              <div class="mb-3">
+                <strong>Working Time:</strong>
+                <div>{{ workingHoursFormatted }}</div>
+              </div>
+
+              <div v-if="todayRecord">
+                <p>Check In: {{ formatTime(todayRecord.checkIn) }}</p>
+                <p>Check Out: {{ formatTime(todayRecord.checkOut) }}</p>
+              </div>
+
+              <button
+                v-if="!isPunchedIn"
+                @click="punchIn"
+                class="btn btn-primary w-100"
+              >
+                Punch In
+              </button>
+
+              <button
+                v-else
+                @click="punchOut"
+                class="btn btn-danger w-100"
+              >
+                Punch Out
+              </button>
+
             </div>
-            <!-- /Breadcrumb -->
+          </div>
+        </div>
 
-            <div class="row">
-                <div class="col-xl-3 col-lg-4 d-flex">
-                    <div class="card flex-fill">
-                        <div class="card-body">
-                            <div class="mb-3 text-center">
-                                <h6 class="fw-medium text-gray-5 mb-2">Good Morning, Adrian</h6>
-                                <h4>08:35 AM, 11 Mar 2025</h4>
-                            </div>
-                            <div class="attendance-circle-progress mx-auto mb-3" data-value='65'>
-                                <span class="progress-left">
-                                    <span class="progress-bar border-success"></span>
-                                </span>
-                                <span class="progress-right">
-                                    <span class="progress-bar border-success"></span>
-                                </span>
-                                <div class="avatar avatar-xxl avatar-rounded">
-                                    <img src="@/assets/img/profiles/avatar-27.jpg" alt="Img">
-                                </div>
-                            </div>
-                            <div class="text-center">
-                                <div class="badge badge-md badge-primary mb-3">Production : 3.45 hrs</div>
-                                <h6 class="fw-medium d-flex align-items-center justify-content-center mb-3">
-                                    <i class="ti ti-fingerprint text-primary me-1"></i>
-                                    Punch In at 10.00 AM
-                                </h6>
-                                <a href="javascript:void(0);" class="btn btn-dark w-100">Punch Out</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-9 col-lg-8 d-flex">
-                    <div class="row flex-fill">
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="border-bottom mb-2 pb-2">
-                                        <span class="avatar avatar-sm bg-primary mb-2"><i
-                                                class="ti ti-clock-stop"></i></span>
-                                        <h2 class="mb-2">8.36 / <span class="fs-20 text-gray-5"> 9</span></h2>
-                                        <p class="fw-medium text-truncate">Total Hours Today</p>
-                                    </div>
-                                    <div>
-                                        <p class="d-flex align-items-center fs-13">
-                                            <span class="avatar avatar-xs rounded-circle bg-success flex-shrink-0 me-2">
-                                                <i class="ti ti-arrow-up fs-12"></i>
-                                            </span>
-                                            <span>5% This Week</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="border-bottom mb-2 pb-2">
-                                        <span class="avatar avatar-sm bg-dark mb-2"><i
-                                                class="ti ti-clock-up"></i></span>
-                                        <h2 class="mb-2">10 / <span class="fs-20 text-gray-5"> 40</span></h2>
-                                        <p class="fw-medium text-truncate">Total Hours Week</p>
-                                    </div>
-                                    <div>
-                                        <p class="d-flex align-items-center fs-13">
-                                            <span class="avatar avatar-xs rounded-circle bg-success flex-shrink-0 me-2">
-                                                <i class="ti ti-arrow-up fs-12"></i>
-                                            </span>
-                                            <span>7% Last Week</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="border-bottom mb-2 pb-2">
-                                        <span class="avatar avatar-sm bg-info mb-2"><i
-                                                class="ti ti-calendar-up"></i></span>
-                                        <h2 class="mb-2">75 / <span class="fs-20 text-gray-5"> 98</span></h2>
-                                        <p class="fw-medium text-truncate">Total Hours Month</p>
-                                    </div>
-                                    <div>
-                                        <p class="d-flex align-items-center fs-13 text-truncate">
-                                            <span class="avatar avatar-xs rounded-circle bg-danger flex-shrink-0 me-2">
-                                                <i class="ti ti-arrow-down fs-12"></i>
-                                            </span>
-                                            <span>8% Last Month</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="border-bottom mb-2 pb-2">
-                                        <span class="avatar avatar-sm bg-pink mb-2"><i
-                                                class="ti ti-calendar-star"></i></span>
-                                        <h2 class="mb-2">16 / <span class="fs-20 text-gray-5"> 28</span></h2>
-                                        <p class="fw-medium text-truncate">Overtime this Month</p>
-                                    </div>
-                                    <div>
-                                        <p class="d-flex align-items-center fs-13 text-truncate">
-                                            <span class="avatar avatar-xs rounded-circle bg-danger flex-shrink-0 me-2">
-                                                <i class="ti ti-arrow-down fs-12"></i>
-                                            </span>
-                                            <span>6% Last Month</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-xl-3">
-                                            <div class="mb-3">
-                                                <p class="d-flex align-items-center mb-1"><i
-                                                        class="ti ti-point-filled text-dark-transparent me-1"></i>Total
-                                                    Working hours</p>
-                                                <h3>12h 36m</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-xl-3">
-                                            <div class="mb-3">
-                                                <p class="d-flex align-items-center mb-1"><i
-                                                        class="ti ti-point-filled text-success me-1"></i>Productive
-                                                    Hours</p>
-                                                <h3>08h 36m</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-xl-3">
-                                            <div class="mb-3">
-                                                <p class="d-flex align-items-center mb-1"><i
-                                                        class="ti ti-point-filled text-warning me-1"></i>Break hours</p>
-                                                <h3>22m 15s</h3>
-                                            </div>
-                                        </div>
-                                        <div class="col-xl-3">
-                                            <div class="mb-3">
-                                                <p class="d-flex align-items-center mb-1"><i
-                                                        class="ti ti-point-filled text-info me-1"></i>Overtime</p>
-                                                <h3>02h 15m</h3>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-12">
-                                            <div class="progress bg-transparent-dark mb-3" style="height: 24px;">
-                                                <div class="progress-bar bg-white rounded" role="progressbar"
-                                                    style="width: 18%;"></div>
-                                                <div class="progress-bar bg-success rounded me-2" role="progressbar"
-                                                    style="width: 18%;"></div>
-                                                <div class="progress-bar bg-warning rounded me-2" role="progressbar"
-                                                    style="width: 5%;"></div>
-                                                <div class="progress-bar bg-success rounded me-2" role="progressbar"
-                                                    style="width: 28%;"></div>
-                                                <div class="progress-bar bg-warning rounded me-2" role="progressbar"
-                                                    style="width: 17%;"></div>
-                                                <div class="progress-bar bg-success rounded me-2" role="progressbar"
-                                                    style="width: 22%;"></div>
-                                                <div class="progress-bar bg-warning rounded me-2" role="progressbar"
-                                                    style="width: 5%;"></div>
-                                                <div class="progress-bar bg-info rounded me-2" role="progressbar"
-                                                    style="width: 3%;"></div>
-                                                <div class="progress-bar bg-info rounded" role="progressbar"
-                                                    style="width: 2%;"></div>
-                                                <div class="progress-bar bg-white rounded" role="progressbar"
-                                                    style="width: 18%;"></div>
-                                            </div>
+        <!-- SUMMARY -->
+        <div class="col-xl-8">
+          <div class="row">
 
-                                        </div>
-                                        <div class="co-md-12">
-                                            <div
-                                                class="d-flex align-items-center justify-content-between flex-wrap row-gap-2">
-                                                <span class="fs-10">06:00</span>
-                                                <span class="fs-10">07:00</span>
-                                                <span class="fs-10">08:00</span>
-                                                <span class="fs-10">09:00</span>
-                                                <span class="fs-10">10:00</span>
-                                                <span class="fs-10">11:00</span>
-                                                <span class="fs-10">12:00</span>
-                                                <span class="fs-10">01:00</span>
-                                                <span class="fs-10">02:00</span>
-                                                <span class="fs-10">03:00</span>
-                                                <span class="fs-10">04:00</span>
-                                                <span class="fs-10">05:00</span>
-                                                <span class="fs-10">06:00</span>
-                                                <span class="fs-10">07:00</span>
-                                                <span class="fs-10">08:00</span>
-                                                <span class="fs-10">09:00</span>
-                                                <span class="fs-10">10:00</span>
-                                                <span class="fs-10">11:00</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="col-md-4">
+              <div class="card p-3">
+                <h6>Total Records</h6>
+                <h3>{{ pagination.total }}</h3>
+              </div>
             </div>
 
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                    <h5>Employee Attendance</h5>
-                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                        <div class="me-3">
-                            <div class="input-icon w-77 position-relative">
-                                <span class="input-icon-addon">
-                                    <i class="ti ti-calendar"></i>
-                                </span>
-                                <a-date-picker v-model="valueOne" class="form-control datetimepicker"
-                                    placeholder="dd/mm/yyyy" />
-                            </div>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Select Status
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Present</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Absent</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Sort By : Last 7 Days
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <attendence-employee-table></attendence-employee-table>
+            <div class="col-md-4">
+              <div class="card p-3">
+                <h6>Present Days</h6>
+                <h3>
+                  {{ records.filter(r => r.status === 'present').length }}
+                </h3>
+              </div>
             </div>
+
+            <div class="col-md-4">
+              <div class="card p-3">
+                <h6>Total Hours (Approx)</h6>
+                <h3>
+                  {{
+                    Math.floor(
+                      records.reduce((sum, r) => {
+                        if (!r.checkIn || !r.checkOut) return sum;
+                        return sum + ((new Date(r.checkOut) - new Date(r.checkIn)) / 3600000);
+                      }, 0)
+                    )
+                  }} hrs
+                </h3>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card mt-4">
+        <div class="card-header d-flex justify-content-between">
+          <h5>My Attendance</h5>
+        </div>
+
+        <div class="card-body table-responsive">
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Production</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="row in records" :key="row.id">
+                <td>{{ formatDate(row.date) }}</td>
+                <td>
+                  <span class="badge bg-success">
+                    {{ row.status }}
+                  </span>
+                </td>
+                <td>{{ formatTime(row.checkIn) }}</td>
+                <td>{{ formatTime(row.checkOut) }}</td>
+                <td>{{ row.productionMinutes || 0 }} mins</td>
+              </tr>
+
+              <tr v-if="!records.length">
+                <td colspan="5" class="text-center">No data</td>
+              </tr>
+            </tbody>
+
+          </table>
 
         </div>
 
-        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-            <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-            <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+        <!-- PAGINATION -->
+        <div class="card-footer d-flex justify-content-between">
+          <button
+            class="btn btn-sm btn-light"
+            :disabled="pagination.page === 1"
+            @click="pagination.page--; fetchAttendance();"
+          >
+            Prev
+          </button>
+
+          <span>Page {{ pagination.page }}</span>
+
+          <button
+            class="btn btn-sm btn-light"
+            :disabled="records.length < pagination.limit"
+            @click="pagination.page++; fetchAttendance();"
+          >
+            Next
+          </button>
         </div>
+
+      </div>
 
     </div>
-    <!-- /Page Wrapper -->
-
-    <attendance-employee-modal></attendance-employee-modal>
+  </div>
 </template>
