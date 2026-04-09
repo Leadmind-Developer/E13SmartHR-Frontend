@@ -1,269 +1,215 @@
+<template>
+  <div class="card-body p-0">
+
+    <!-- Controls -->
+    <div class="row mb-2">
+      <div class="col-sm-12 col-md-6">
+        <div class="dataTables_length">
+          <label>
+            Rows per page
+            <select v-model="limit" @change="fetchGoals" class="form-select form-select-sm">
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="col-sm-12 col-md-6 text-end">
+        <input
+          v-model="search"
+          @input="debouncedFetch"
+          type="search"
+          class="form-control form-control-sm"
+          placeholder="Search goals..."
+        />
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <a-table
+        :columns="columns"
+        :data-source="goals"
+        :loading="loading"
+        row-key="id"
+      >
+        <template #bodyCell="{ column, record }">
+
+          <!-- Goal Type -->
+          <template v-if="column.key === 'goalType'">
+            {{ record.GoalType?.name || 'N/A' }}
+          </template>
+
+          <!-- Status -->
+          <template v-if="column.key === 'status'">
+            <span class="badge"
+              :class="record.status === 'Active' ? 'bg-success' : 'bg-secondary'">
+              {{ record.status }}
+            </span>
+          </template>
+
+          <!-- Progress -->
+          <template v-if="column.key === 'progress'">
+            <div>
+              <small>{{ record.progress || 0 }}%</small>
+              <div class="progress" style="height:5px;">
+                <div
+                  class="progress-bar"
+                  role="progressbar"
+                  :style="{ width: record.progress + '%' }"
+                ></div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Dates -->
+          <template v-if="column.key === 'startDate'">
+            {{ formatDate(record.startDate) }}
+          </template>
+
+          <template v-if="column.key === 'endDate'">
+            {{ formatDate(record.endDate) }}
+          </template>
+
+          <!-- Actions -->
+          <template v-if="column.key === 'action'">
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-outline-primary" @click="editGoal(record)">
+                Edit
+              </button>
+              <button class="btn btn-sm btn-outline-danger" @click="deleteGoal(record)">
+                Delete
+              </button>
+            </div>
+          </template>
+
+        </template>
+      </a-table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div>
+        Showing {{ paginationInfo.from }} - {{ paginationInfo.to }} of {{ paginationInfo.total }} entries
+      </div>
+
+      <a-pagination
+        v-model:current="page"
+        :page-size="limit"
+        :total="paginationInfo.total"
+        @change="fetchGoals"
+      />
+    </div>
+
+  </div>
+</template>
+
 <script>
-const data = [
-  {
-    key: "1",
-    Goal_Type: "Development Goals",
-    Subject: "Programming Skills",
-    Target_Achievement: "Complete a HTML course",
-    Start_Date: "14 Jan 2024",
-    End_Date: "13 Mar 2024",
-    Description: "Improve proficiency",
-    Status: "Active",
-    Progress: "Completed 70%",
-  },
-  {
-    key: "2",
-    Goal_Type: "Project Goals",
-    Subject: "App Development",
-    Target_Achievement: "Deliver the app",
-    Start_Date: "21 Jan 2024",
-    End_Date: "21 Feb 2024",
-    Description: "Complete the app",
-    Status: "Active",
-    Progress: "Completed 40%",
-  },
-  {
-    key: "3",
-    Goal_Type: "Project Goals",
-    Subject: "Web Development",
-    Target_Achievement: "Deliver the template",
-    Start_Date: "18 Feb 2024",
-    End_Date: "18 Mar 2024",
-    Description: "Complete the template",
-    Status: "Active",
-    Progress: "Completed 60%",
-  },
-];
-
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Goal Type",
-    dataIndex: "Goal_Type",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Goal_Type.toLowerCase();
-        b = b.Goal_Type.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Subject",
-    dataIndex: "Subject",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Subject.toLowerCase();
-        b = b.Subject.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Target Achievement",
-    dataIndex: "Target_Achievement",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Target_Achievement.toLowerCase();
-        b = b.Target_Achievement.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Start Date",
-    dataIndex: "Start_Date",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Start_Date.toLowerCase();
-        b = b.Start_Date.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "End Date",
-    dataIndex: "End_Date",
-    sorter: {
-      compare: (a, b) => {
-        a = a.End_Date.toLowerCase();
-        b = b.End_Date.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Description",
-    dataIndex: "Description",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Description.toLowerCase();
-        b = b.Description.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Status",
-    dataIndex: "Status",
-    key: "Status",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Status.toLowerCase();
-        b = b.Status.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Progress",
-    dataIndex: "Progress",
-    key: "Progress",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Progress.toLowerCase();
-        b = b.Progress.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
+import api from "@/services/api";
 
 export default {
+  name: "GoalTrackingTable",
+
   data() {
     return {
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
-      currentPage: 1,
-      pageSize: 10,
+      goals: [],
+      loading: false,
+
+      search: "",
+      page: 1,
+      limit: 10,
+
+      paginationInfo: {
+        total: 0,
+        from: 0,
+        to: 0,
+      },
+
+      columns: [
+        { title: "Goal Type", key: "goalType" },
+        { title: "Subject", dataIndex: "subject", key: "subject" },
+        { title: "Target", dataIndex: "target", key: "target" },
+        { title: "Start Date", key: "startDate" },
+        { title: "End Date", key: "endDate" },
+        { title: "Status", key: "status" },
+        { title: "Progress", key: "progress" },
+        { title: "Actions", key: "action" },
+      ],
     };
   },
-  computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.Goal_Type.toLowerCase().includes(query) ||
-          record.Subject.toLowerCase().includes(query) ||
-          record.Target_Achievement.toLowerCase().includes(query) ||
-          record.Start_Date.toLowerCase().includes(query) ||
-          record.End_Date.toLowerCase().includes(query) ||
-          record.Description.toLowerCase().includes(query) ||
-          record.Status.toLowerCase().includes(query) ||
-          record.Progress.toLowerCase().includes(query)
-        );
-      });
+
+  mounted() {
+    this.fetchGoals();
+  },
+
+  methods: {
+    async fetchGoals() {
+      this.loading = true;
+
+      try {
+        const { data } = await api.get("/goal", {
+          params: {
+            page: this.page,
+            limit: this.limit,
+            search: this.search,
+          },
+        });
+
+        this.goals = data.data || [];
+        this.paginationInfo.total = data.count || 0;
+
+        const start = (this.page - 1) * this.limit + 1;
+        const end = Math.min(this.page * this.limit, this.paginationInfo.total);
+
+        this.paginationInfo.from = this.paginationInfo.total ? start : 0;
+        this.paginationInfo.to = end;
+
+      } catch (error) {
+        console.error("Failed to fetch goals:", error.message);
+      } finally {
+        this.loading = false;
+      }
     },
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+
+    debouncedFetch: (() => {
+      let timeout;
+      return function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          this.page = 1;
+          this.fetchGoals();
+        }, 400);
+      };
+    })(),
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
     },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+
+    editGoal(record) {
+      this.$emit("edit-goal", record);
+    },
+
+    async deleteGoal(record) {
+      if (!confirm("Are you sure you want to delete this goal?")) return;
+
+      try {
+        await api.delete(`/goal/${record.id}`);
+        this.fetchGoals();
+      } catch (error) {
+        console.error("Delete failed:", error.message);
+      }
     },
   },
 };
 </script>
 
-<template>
-  <div class="card-body p-0">
-    <div class="row">
-      <div class="col-sm-12 col-md-6">
-        <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-            <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-              class="form-select form-select-sm">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select> Entries</label></div>
-      </div>
-      <div class="col-sm-12 col-md-6">
-        <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery" type="search"
-              class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0"></label>
-        </div>
-      </div>
-    </div>
-    <div class="custom-datatable-filter table-responsive">
-      <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-        :row-selection="rowSelection">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'Status'">
-            <span class="badge badge-success d-inline-flex align-items-center badge-xs">
-              <i class="ti ti-point-filled me-1"></i>{{ record.Status }}
-            </span>
-          </template>
-          <template v-if="column.key === 'Progress'">
-            <span class="fs-12 mb-1">{{ record.Progress }}</span>
-            <div class="progress" role="progressbar" aria-label="Success example" aria-valuenow="25" aria-valuemin="0"
-              aria-valuemax="100" style="width: 87px; height: 5px">
-              <div class="progress-bar bg-primary" :style="{
-                width:
-                  record.Progress === 'Completed 70%'
-                    ? '80%'
-                    : record.Progress === 'Completed 40%'
-                      ? '40%'
-                      : '60%',
-              }"></div>
-            </div>
-          </template>
-          <template v-if="column.key === 'action'">
-            <div class="action-icon d-inline-flex">
-              <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_goal"><i
-                  class="ti ti-edit"></i></a>
-              <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                  class="ti ti-trash"></i></a>
-            </div>
-          </template>
-        </template>
-      </a-table>
-    </div>
-    <div class="row pagination">
-      <div class="col-sm-12 col-md-5">
-        <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-          Showing {{
-            (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-            filteredPages.length) }} of {{
-            filteredPages.length }}
-          entries</div>
-      </div>
-      <div class="col-sm-12 col-md-7">
-        <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-          <ul class="pagination">
-            <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-              id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-              </a></li>
-            <li class="paginate_button page-item" :class="{ active: page === currentPage }" v-for="page in totalPages"
-              :key="page">
-              <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-            </li>
-            <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-              id="DataTables_Table_0_next">
-              <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next" tabindex="-1"
-                class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage < totalPages ? currentPage++ : null"><i class="ti ti-chevron-right"></i></a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+<style scoped>
+.table-responsive {
+  overflow-x: auto;
+}
+</style>
