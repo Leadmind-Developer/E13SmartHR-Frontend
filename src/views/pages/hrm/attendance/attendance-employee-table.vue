@@ -1,5 +1,5 @@
 <script>
-import axios from "axios";
+import api from "@/services/api";
 
 export default {
   data() {
@@ -53,7 +53,7 @@ export default {
       try {
         this.loading = true;
 
-        const res = await axios.get("/api/attendance/me", {
+        const res = await api.get("/api/attendance/me", {
           params: {
             page: this.currentPage,
             limit: this.pageSize,
