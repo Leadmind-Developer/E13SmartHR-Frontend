@@ -1,139 +1,210 @@
-<script>
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
-import moment from "moment";
-import DateRangePicker from "daterangepicker";
-
-export default {
-  data() {
-    return {
-      title: "Goal Type",
-      text: "Performance",
-      text1: "Add New Goal Type",
-    };
-  },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
-    },
-  },
-  setup() {
-    const dateRangeInput = ref(null);
-
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
-
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
-
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
-
-        booking_range(start, end);
-      }
-    });
-
-    return {
-      dateRangeInput,
-    };
-  },
-};
-</script>
-
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-  <!-- Page Wrapper -->
   <div class="page-wrapper">
     <div class="content">
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_goal_type"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Goal
-            </a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Performance Indicator list -->
+        <div class="d-flex align-items-center flex-wrap">
+          <button
+            class="btn btn-primary d-flex align-items-center"
+            data-bs-toggle="modal"
+            data-bs-target="#goalTypeModal"
+          >
+            <i class="ti ti-circle-plus me-2"></i>
+            Add Goal Type
+          </button>
+        </div>
+      </div>
+
+      <!-- Card -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
           <h5>Goal Type List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <input
+              v-model="search"
+              @input="fetchGoalTypes"
+              type="text"
+              class="form-control"
+              placeholder="Search goal types..."
+            />
           </div>
         </div>
-        <goal-type-table></goal-type-table>
+
+        <!-- Table -->
+        <div class="card-body">
+          <div v-if="loading" class="text-center py-4">
+            Loading...
+          </div>
+
+          <div v-else-if="error" class="alert alert-danger">
+            {{ error }}
+          </div>
+
+          <table v-else class="table table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Created</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="type in goalTypes" :key="type.id">
+                <td>{{ type.name }}</td>
+                <td>{{ type.description || "-" }}</td>
+                <td>{{ formatDate(type.createdAt) }}</td>
+
+                <td class="text-end">
+                  <button class="btn btn-sm btn-warning me-2" @click="editGoalType(type)">
+                    Edit
+                  </button>
+                  <button class="btn btn-sm btn-danger" @click="deleteGoalType(type.id)">
+                    Delete
+                  </button>
+                </td>
+              </tr>
+
+              <tr v-if="goalTypes.length === 0">
+                <td colspan="4" class="text-center">No goal types found</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <button class="btn btn-outline-primary" :disabled="page === 1" @click="prevPage">
+              Previous
+            </button>
+
+            <span>Page {{ page }}</span>
+
+            <button class="btn btn-outline-primary" @click="nextPage">
+              Next
+            </button>
+          </div>
+        </div>
       </div>
-      <!-- /Performance Indicator list -->
     </div>
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
+    <!-- Footer -->
+    <div class="footer d-sm-flex justify-content-between border-top bg-white p-3">
+      <p class="mb-0">2014 - {{ currentYear }} &copy; SmartHR.</p>
       <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
+        Designed & Developed By
+        <a href="#" class="text-primary">Dreams</a>
       </p>
     </div>
   </div>
-  <!-- /Page Wrapper -->
 
-  <goal-type-modal></goal-type-modal>
+  <!-- Modal -->
+  <goal-type-modal
+    :editData="selectedGoalType"
+    @saved="fetchGoalTypes"
+  />
 </template>
+
+<script setup>
+import { ref, onMounted, computed } from "vue";
+import api from "@/services/api";
+
+// UI State
+const title = "Goal Type";
+const text = "Performance";
+const text1 = "Add New Goal Type";
+
+const goalTypes = ref([]);
+const loading = ref(false);
+const error = ref(null);
+
+const search = ref("");
+const page = ref(1);
+const limit = 10;
+
+const selectedGoalType = ref(null);
+
+const currentYear = computed(() => new Date().getFullYear());
+
+// -----------------------------
+// Fetch Goal Types
+// -----------------------------
+const fetchGoalTypes = async () => {
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const { data } = await api.get("/performance/goal", {
+      params: {
+        page: page.value,
+        limit,
+        search: search.value,
+      },
+    });
+
+    goalTypes.value = data.data || [];
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// -----------------------------
+// Pagination
+// -----------------------------
+const nextPage = () => {
+  page.value++;
+  fetchGoalTypes();
+};
+
+const prevPage = () => {
+  if (page.value > 1) {
+    page.value--;
+    fetchGoalTypes();
+  }
+};
+
+// -----------------------------
+// Edit
+// -----------------------------
+const editGoalType = (type) => {
+  selectedGoalType.value = type;
+  const modal = new bootstrap.Modal(document.getElementById("goalTypeModal"));
+  modal.show();
+};
+
+// -----------------------------
+// Delete
+// -----------------------------
+const deleteGoalType = async (id) => {
+  if (!confirm("Are you sure you want to delete this goal type?")) return;
+
+  try {
+    await api.delete(`/performance/goal/${id}`);
+    fetchGoalTypes();
+  } catch (err) {
+    alert(err.response?.data?.message || err.message);
+  }
+};
+
+// -----------------------------
+// Utils
+// -----------------------------
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString();
+};
+
+// -----------------------------
+// Lifecycle
+// -----------------------------
+onMounted(() => {
+  fetchGoalTypes();
+});
+</script>
