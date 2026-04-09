@@ -1,5 +1,5 @@
 <script>
-import axios from "axios";
+import api from "@/services/api";
 
 export default {
   data() {
@@ -69,7 +69,7 @@ export default {
     async fetchAttendance() {
       this.loading = true;
       try {
-        const { data } = await axios.get("/attendance/me", {
+        const { data } = await api.get("/attendance/me", {
           params: {
             page: this.pagination.page,
             limit: this.pagination.limit,
@@ -92,7 +92,7 @@ export default {
 
     async punchIn() {
       try {
-        await axios.post("/attendance/punch-in");
+        await api.post("/attendance/punch-in");
         await this.fetchAttendance();
       } catch (err) {
         alert(err.response?.data?.message || "Punch in failed");
@@ -101,7 +101,7 @@ export default {
 
     async punchOut() {
       try {
-        await axios.post("/attendance/punch-out");
+        await api.post("/attendance/punch-out");
         await this.fetchAttendance();
       } catch (err) {
         alert(err.response?.data?.message || "Punch out failed");
