@@ -1,5 +1,5 @@
 <script>
-import axios from "axios";
+import api from "@/services/api";
 import dayjs from "dayjs";
 
 export default {
@@ -69,7 +69,7 @@ export default {
       try {
         this.loading = true;
 
-        const res = await axios.get("/attendance/admin", {
+        const res = await api.get("/attendance/admin", {
           params: {
             page: this.pagination.page,
             limit: this.pagination.limit,
