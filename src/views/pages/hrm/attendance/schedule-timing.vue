@@ -4,7 +4,7 @@ import "daterangepicker/daterangepicker.js";
 
 import { ref, onMounted, watch } from "vue";
 import moment from "moment";
-import axios from "@/service/axios"; // adjust if your axios instance path differs
+import api from "@/service/api"; 
 import DateRangePicker from "daterangepicker";
 
 export default {
@@ -52,7 +52,7 @@ export default {
       error.value = null;
 
       try {
-        const res = await axios.get("/schedule-timings", {
+        const res = await api.get("/schedule-timings", {
           params: {
             page: pagination.value.page,
             limit: pagination.value.limit,
