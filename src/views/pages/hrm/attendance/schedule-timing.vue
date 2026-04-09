@@ -4,7 +4,7 @@ import "daterangepicker/daterangepicker.js";
 
 import { ref, onMounted, watch } from "vue";
 import moment from "moment";
-import api from "@/service/api"; 
+import api from "@/services/api";
 import DateRangePicker from "daterangepicker";
 
 export default {
