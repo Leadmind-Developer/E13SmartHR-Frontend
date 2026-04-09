@@ -202,91 +202,61 @@
     </div>
 </template>
 
-<script>
-export default {
-    name: "holidays",
-    data() {
-        return {
-            holidays: [
-                {
-                    id: 1,
-                    name: "New Year's Day",
-                    date: "01/01/2024",
-                    day: "Monday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 2,
-                    name: "Republic Day",
-                    date: "26/01/2024",
-                    day: "Friday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 3,
-                    name: "Maha Shivaratri",
-                    date: "08/03/2024",
-                    day: "Friday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 4,
-                    name: "Holi",
-                    date: "25/03/2024",
-                    day: "Monday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 5,
-                    name: "Good Friday",
-                    date: "29/03/2024",
-                    day: "Friday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 6,
-                    name: "Eid-ul-Fitr",
-                    date: "10/04/2024",
-                    day: "Wednesday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 7,
-                    name: "Buddha Purnima",
-                    date: "23/05/2024",
-                    day: "Thursday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 8,
-                    name: "Independence Day",
-                    date: "15/08/2024",
-                    day: "Thursday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 9,
-                    name: "Gandhi Jayanti",
-                    date: "02/10/2024",
-                    day: "Wednesday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 10,
-                    name: "Diwali",
-                    date: "01/11/2024",
-                    day: "Friday",
-                    status: "Public Holiday",
-                },
-                {
-                    id: 11,
-                    name: "Christmas Day",
-                    date: "25/12/2024",
-                    day: "Wednesday",
-                    status: "Public Holiday",
-                },
-            ],
-        };
-    },
+<script setup>
+import { ref, onMounted } from "vue";
+import axios from "@/services/api"; // adjust if needed
+
+const holidays = ref([]);
+const loading = ref(false);
+
+// form state
+const form = ref({
+  name: "",
+  date: "",
+});
+
+// 🔄 Fetch holidays
+const fetchHolidays = async () => {
+  try {
+    loading.value = true;
+    const res = await api.get("/holidays");
+
+    holidays.value = res.data.data.map((h) => ({
+      id: h.id,
+      name: h.title,
+      date: h.date,
+      day: new Date(h.date).toLocaleDateString("en-US", {
+        weekday: "long",
+      }),
+    }));
+  } finally {
+    loading.value = false;
+  }
 };
+
+// ➕ Create holiday
+const createHoliday = async () => {
+  if (!form.value.name || !form.value.date) return;
+
+  await api.post("/holidays", {
+    name: form.value.name,
+    date: form.value.date,
+  });
+
+  form.value.name = "";
+  form.value.date = "";
+
+  await fetchHolidays();
+};
+
+// ❌ Delete holiday
+const deleteHoliday = async (id) => {
+  const confirmDelete = confirm("Delete this holiday?");
+  if (!confirmDelete) return;
+
+  await api.delete(`/holidays/${id}`);
+  await fetchHolidays();
+};
+
+onMounted(fetchHolidays);
 </script>
