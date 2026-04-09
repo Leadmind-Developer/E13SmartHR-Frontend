@@ -170,7 +170,7 @@
 </template>
 
 <script>
-import axios from "@/plugins/axios";
+import api from "@/services/api";
 import moment from "moment";
 import DateRangePicker from "daterangepicker";
 import "daterangepicker/daterangepicker.css";
@@ -232,7 +232,7 @@ export default {
           endDate: this.filters.endDate || undefined
         };
 
-        const res = await axios.get("/shift-swap-requests", { params });
+        const res = await api.get("/shift-swap-requests", { params });
 
         this.requests = res.data.data;
         this.pagination.totalPages = res.data.pagination.totalPages;
@@ -251,7 +251,7 @@ export default {
 
     async updateStatus(id, status) {
       try {
-        await axios.patch(`/shift-swap-requests/${id}/status`, { status });
+        await api.patch(`/shift-swap-requests/${id}/status`, { status });
         this.fetchData();
       } catch (err) {
         console.error(err);
