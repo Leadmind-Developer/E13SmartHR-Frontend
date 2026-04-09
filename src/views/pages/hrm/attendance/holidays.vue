@@ -155,20 +155,30 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr v-for="item in data" :key="item.id">
+                                    <tr v-for="item in holidays" :key="item.id">
                                         <td>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" value="" id="flexCheck">
                                             </div>
                                         </td>
-                                        <td>{{ item.name }}</td>
+                                       <td>{{ item.title }}</td>
                                         <td>{{ item.date }}</td>
                                         <td>{{ item.day }}</td>
                                         <td>
-                                            <span class="badge badge-light-danger">{{ item.type }}</span>
+                                            <span
+                                               class="badge"
+                                               :class="item.type === 'national' ? 'badge-light-danger' : 'badge-light-info'"
+                                          >
+                                               {{ item.type }}
+                                           </span>
                                         </td>
                                         <td>
-                                            <span class="badge badge-light-success">{{ item.status }}</span>
+                                            <span
+                                                class="badge"
+                                                :class="item.status === 'active' ? 'badge-light-success' : 'badge-light-secondary'"
+                                            >
+                                                {{ item.status }}
+                                            </span>
                                         </td>
                                         <td class="text-end">
                                             <div class="dropdown dropdown-action">
@@ -184,7 +194,7 @@
                                                             <i class="ti ti-pencil me-2"></i>Edit</a>
                                                     </li>
                                                     <li>
-                                                        <a class="dropdown-item" href="javascript:void(0)"
+                                                        <a class="dropdown-item" @click="deleteHoliday(item.id)">
                                                             data-bs-toggle="modal" data-bs-target="#delete_modal">
                                                             <i class="ti ti-trash me-2"></i>Delete</a>
                                                     </li>
@@ -204,27 +214,38 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import axios from "@/services/api"; // adjust if needed
+import api from "@/services/api";
 
 const holidays = ref([]);
 const loading = ref(false);
 
-// form state
+// filters
+const filters = ref({
+  type: "",
+  status: "",
+  startDate: "",
+  endDate: "",
+});
+
+// form
 const form = ref({
   name: "",
   date: "",
+  type: "company",
+  status: "active",
 });
 
-// 🔄 Fetch holidays
+// fetch
 const fetchHolidays = async () => {
+  loading.value = true;
+
   try {
-    loading.value = true;
-    const res = await api.get("/holidays");
+    const res = await api.get("/holidays", {
+      params: filters.value,
+    });
 
     holidays.value = res.data.data.map((h) => ({
-      id: h.id,
-      name: h.title,
-      date: h.date,
+      ...h,
       day: new Date(h.date).toLocaleDateString("en-US", {
         weekday: "long",
       }),
@@ -234,28 +255,35 @@ const fetchHolidays = async () => {
   }
 };
 
-// ➕ Create holiday
+// create
 const createHoliday = async () => {
-  if (!form.value.name || !form.value.date) return;
-
-  await api.post("/holidays", {
-    name: form.value.name,
-    date: form.value.date,
-  });
-
-  form.value.name = "";
-  form.value.date = "";
-
-  await fetchHolidays();
+  await api.post("/holidays", form.value);
+  resetForm();
+  fetchHolidays();
 };
 
-// ❌ Delete holiday
+// update
+const updateHoliday = async (id) => {
+  await api.patch(`/holidays/${id}`, form.value);
+  resetForm();
+  fetchHolidays();
+};
+
+// delete
 const deleteHoliday = async (id) => {
-  const confirmDelete = confirm("Delete this holiday?");
-  if (!confirmDelete) return;
+  if (!confirm("Delete this holiday?")) return;
 
   await api.delete(`/holidays/${id}`);
-  await fetchHolidays();
+  fetchHolidays();
+};
+
+const resetForm = () => {
+  form.value = {
+    name: "",
+    date: "",
+    type: "company",
+    status: "active",
+  };
 };
 
 onMounted(fetchHolidays);
