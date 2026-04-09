@@ -1,563 +1,316 @@
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <layout-header></layout-header>
+  <layout-sidebar></layout-sidebar>
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <div class="my-auto mb-2">
-                    <h2 class="mb-1">Shift Swap Requests</h2>
-                    <nav>
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                <router-link to="/dashboard"><i class="ti ti-smart-home"></i></router-link>
-                            </li>
-                            <li class="breadcrumb-item">
-                                Attendance
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">Shift Swap Requests</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-                    <div class="mb-2 me-2">
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-file-export me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
-                                </li>
-                            </ul>
-                        </div>
+  <div class="page-wrapper">
+    <div class="content">
 
-                    </div>
-                    <div class="mb-2">
-                        <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_modal"
-                            class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add
-                            New Request</a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Breadcrumb -->
+      <!-- Breadcrumb -->
+      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        <div class="my-auto mb-2">
+          <h2 class="mb-1">Shift Swap Requests</h2>
+          <nav>
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item">
+                <router-link to="/dashboard">
+                  <i class="ti ti-smart-home"></i>
+                </router-link>
+              </li>
+              <li class="breadcrumb-item">Attendance</li>
+              <li class="breadcrumb-item active">Shift Swap Requests</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
 
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                    <h5>Shift Swap Requests</h5>
-                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                        <div class="me-3">
-                            <div class="input-icon position-relative">
-                                <span class="input-icon-addon">
-                                    <i class="ti ti-calendar text-gray-9"></i>
-                                </span>
-                                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                                    placeholder="dd/mm/yyyy - dd/mm/yyyy">
-                            </div>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Designation
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Accountant</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">App Developer</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Technician</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Web Developer</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Shift
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Regular</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Night</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Status
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Approved</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Pending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Rejected</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Completed</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Sort By : Last 7 Days
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="row">
-                        <div class="col-sm-12 col-md-6">
-                            <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-                                    <select v-model="pageSize" name="DataTables_Table_0_length"
-                                        aria-controls="DataTables_Table_0" class="form-select form-select-sm">
-                                        <option value="10">10</option>
-                                        <option value="25">25</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select> Entries</label></div>
-                        </div>
-                        <div class="col-sm-12 col-md-6">
-                            <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input
-                                        v-model="searchQuery" type="search" class="form-control form-control-sm"
-                                        placeholder="Search" aria-controls="DataTables_Table_0"></label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="custom-datatable-filter table-responsive">
-                        <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-                            :row-selection="rowSelection">
-                            <template #bodyCell="{ column, record }">
-                                <template v-if="column.key === 'EmpID'">
-                                    <router-link to="/employee/employee-details">{{ record.EmpID }}</router-link>
-                                </template>
-                                <template v-if="column.key === 'Name'">
-                                    <div class="d-flex align-items-center file-name-icon">
-                                        <a href="javascript:void(0);" class="avatar avatar-md border avatar-rounded">
-                                            <img :src="getImageUrl(record.Image)" class="img-fluid" alt="img">
-                                        </a>
-                                        <div class="ms-2">
-                                            <a class="fw-medium fs-14">{{ record.Name }}</a>
-                                        </div>
-                                    </div>
-                                </template>
-                                <template v-if="column.key === 'Status'">
-                                    <span class="d-inline-flex align-items-center badge-xs" :class="[
-                                        'badge',
-                                        record.Status === 'Approved' || record.Status === 'Completed'
-                                            ? 'badge-soft-success'
-                                            : record.Status === 'Pending'
-                                                ? 'badge-soft-info'
-                                                : record.Status === 'Rejected'
-                                                    ? 'badge-soft-danger'
-                                                    : ''
-                                    ]">
-                                        {{ record.Status }}
-                                    </span>
-                                </template>
-                                <template v-if="column.key === 'action'">
-                                    <div class="action-icon d-inline-flex">
-                                        <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal"
-                                            data-bs-target="#edit_modal"><i class="ti ti-edit"></i></a>
-                                    </div>
-                                </template>
-                            </template>
-                        </a-table>
-                    </div>
-                    <div class="row pagination">
-                        <div class="col-sm-12 col-md-5">
-                            <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                                Showing {{
-                                    (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-                                    filteredPages.length) }} of {{
-                                    filteredPages.length }}
-                                entries</div>
-                        </div>
-                        <div class="col-sm-12 col-md-7">
-                            <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-                                <ul class="pagination">
-                                    <li class="paginate_button page-item previous"
-                                        :class="{ disabled: currentPage === 1 }" id="DataTables_Table_0_previous"><a
-                                            aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                                            data-dt-idx="previous" tabindex="-1" class="page-link"
-                                            href="javascript:void(0);"
-                                            @click.prevent="currentPage > 1 ? currentPage-- : null"><i
-                                                class="ti ti-chevron-left"></i>
-                                        </a></li>
-                                    <li class="paginate_button page-item" :class="{ active: page === currentPage }"
-                                        v-for="page in totalPages" :key="page">
-                                        <a href="javascript:void(0);" @click.prevent="currentPage = page"
-                                            aria-controls="DataTables_Table_0" role="link" aria-current="page"
-                                            data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-                                    </li>
-                                    <li class="paginate_button page-item next"
-                                        :class="{ disabled: currentPage === totalPages }" id="DataTables_Table_0_next">
-                                        <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                                            data-dt-idx="next" tabindex="-1" class="page-link"
-                                            href="javascript:void(0);"
-                                            @click.prevent="currentPage < totalPages ? currentPage++ : null"><i
-                                                class="ti ti-chevron-right"></i></a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <!-- Filters -->
+      <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap gap-3 align-items-center">
+
+          <!-- Search -->
+          <input
+            v-model="filters.search"
+            type="text"
+            class="form-control w-auto"
+            placeholder="Search..."
+            @input="debouncedFetch"
+          />
+
+          <!-- Status -->
+          <select v-model="filters.status" class="form-select w-auto" @change="fetchData">
+            <option value="">All Status</option>
+            <option value="PENDING">Pending</option>
+            <option value="APPROVED_BY_MANAGER">Approved (Manager)</option>
+            <option value="APPROVED_BY_HR">Approved (HR)</option>
+            <option value="APPROVED_FINAL">Completed</option>
+            <option value="REJECTED">Rejected</option>
+          </select>
+
+          <!-- Designation -->
+          <select v-model="filters.designation" class="form-select w-auto" @change="fetchData">
+            <option value="">All Designations</option>
+            <option>Accountant</option>
+            <option>App Developer</option>
+            <option>Technician</option>
+            <option>Web Developer</option>
+          </select>
+
+          <!-- Date Range -->
+          <input
+            type="text"
+            class="form-control w-auto"
+            ref="dateRangeInput"
+            placeholder="Date Range"
+          />
+
+          <!-- Refresh -->
+          <button class="btn btn-primary" @click="fetchData">
+            Refresh
+          </button>
 
         </div>
+      </div>
 
-        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-            <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-            <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+      <!-- Table -->
+      <div class="card">
+        <div class="card-body">
+
+          <div v-if="loading" class="text-center py-4">
+            Loading...
+          </div>
+
+          <a-table
+            v-else
+            :columns="columns"
+            :data-source="requests"
+            :pagination="false"
+            row-key="id"
+          >
+            <template #bodyCell="{ column, record }">
+
+              <template v-if="column.key === 'employee'">
+                {{ record.employee?.name || '-' }}
+              </template>
+
+              <template v-if="column.key === 'designation'">
+                {{ record.employee?.designation || '-' }}
+              </template>
+
+              <template v-if="column.key === 'currentShift'">
+                {{ record.currentShiftId }}
+              </template>
+
+              <template v-if="column.key === 'requestedShift'">
+                {{ record.requestedShiftId }}
+              </template>
+
+              <template v-if="column.key === 'status'">
+                <span class="badge"
+                  :class="statusClass(record.status)">
+                  {{ record.status }}
+                </span>
+              </template>
+
+              <template v-if="column.key === 'action'">
+                <button class="btn btn-sm btn-outline-primary me-2"
+                  @click="viewRequest(record)">
+                  View
+                </button>
+
+                <button
+                  v-if="canApprove"
+                  class="btn btn-sm btn-success me-2"
+                  @click="updateStatus(record.id, 'APPROVED')"
+                >
+                  Approve
+                </button>
+
+                <button
+                  v-if="canApprove"
+                  class="btn btn-sm btn-danger"
+                  @click="updateStatus(record.id, 'REJECTED')"
+                >
+                  Reject
+                </button>
+              </template>
+
+            </template>
+          </a-table>
+
+          <!-- Pagination -->
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+              Showing {{ pagination.page }} of {{ pagination.totalPages }}
+            </div>
+
+            <div>
+              <button
+                class="btn btn-sm btn-secondary me-2"
+                :disabled="pagination.page === 1"
+                @click="changePage(pagination.page - 1)"
+              >
+                Prev
+              </button>
+
+              <button
+                class="btn btn-sm btn-secondary"
+                :disabled="pagination.page === pagination.totalPages"
+                @click="changePage(pagination.page + 1)"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+
         </div>
+      </div>
 
     </div>
-    <!-- /Page Wrapper -->
-    <shift-swap-requests-modal></shift-swap-requests-modal>
+  </div>
 </template>
+
 <script>
-const data = [
-    {
-        "key": "1",
-        "EmpID": "Emp-001",
-        "Image": "user-11.jpg",
-        "Name": "Anthony Lewis",
-        "Designation": "Accountant",
-        "CurrentShift": "Regular",
-        "RequestedShift": "Night",
-        "RequestedOn": "14 Jun 2025",
-        "Status": "Approved",
-    },
-    {
-        "key": "2",
-        "EmpID": "Emp-002",
-        "Image": "user-13.jpg",
-        "Name": "Brian Villalobos",
-        "Designation": "App Developer",
-        "CurrentShift": "Regular",
-        "RequestedShift": "Night",
-        "RequestedOn": "25 May 2025",
-        "Status": "Pending",
-    },
-    {
-        "key": "3",
-        "EmpID": "Emp-003",
-        "Image": "user-12.jpg",
-        "Name": "Harvey Smith",
-        "Designation": "Technician",
-        "CurrentShift": "Night",
-        "RequestedShift": "Regular",
-        "RequestedOn": "10 May 2025",
-        "Status": "Rejected",
-    },
-    {
-        "key": "4",
-        "EmpID": "Emp-004",
-        "Image": "user-16.jpg",
-        "Name": "Stephan Peralt",
-        "Designation": "Web Developer",
-        "CurrentShift": "Night",
-        "RequestedShift": "Regular",
-        "RequestedOn": "28 Apr 2025",
-        "Status": "Pending",
-    },
-    {
-        "key": "5",
-        "EmpID": "Emp-005",
-        "Image": "user-15.jpg",
-        "Name": "Doglas Martini",
-        "Designation": "Sales Executive Officer",
-        "CurrentShift": "Night",
-        "RequestedShift": "Regular",
-        "RequestedOn": "15 Apr 2025",
-        "Status": "Approved",
-    },
-    {
-        "key": "6",
-        "EmpID": "Emp-006",
-        "Image": "user-14.jpg",
-        "Name": "Linda Ray",
-        "Designation": "Designer",
-        "CurrentShift": "Regular",
-        "RequestedShift": "Night",
-        "RequestedOn": "20 Mar 2025",
-        "Status": "Rejected",
-    },
-    {
-        "key": "7",
-        "EmpID": "Emp-007",
-        "Image": "user-17.jpg",
-        "Name": "Elliot Murray",
-        "Designation": "Account Manager",
-        "CurrentShift": "Regular",
-        "RequestedShift": "Night",
-        "RequestedOn": "10 Mar 2025",
-        "Status": "Approved",
-    },
-    {
-        "key": "8",
-        "EmpID": "Emp-008",
-        "Image": "user-18.jpg",
-        "Name": "Rebecca Smtih",
-        "Designation": "SEO Analyst",
-        "CurrentShift": "Night",
-        "RequestedShift": "Regular",
-        "RequestedOn": "17 Feb 2025",
-        "Status": "Completed",
-    },
-    {
-        "key": "9",
-        "EmpID": "Emp-009",
-        "Image": "user-20.jpg",
-        "Name": "Connie Waters",
-        "Designation": "Admin",
-        "CurrentShift": "Regular",
-        "RequestedShift": "Night",
-        "RequestedOn": "02 Feb 2025",
-        "Status": "Pending",
-    },
-    {
-        "key": "10",
-        "EmpID": "Emp-010",
-        "Image": "user-19.jpg",
-        "Name": "Lori Broaddus",
-        "Designation": "Business Analyst",
-        "CurrentShift": "Night",
-        "RequestedShift": "Regular",
-        "RequestedOn": "24 Jan 2025",
-        "Status": "Approved",
-    }
-]
-
-const columns = [
-    {
-        sorter: false,
-    },
-    {
-        title: "Emp ID",
-        dataIndex: "EmpID",
-        key: "EmpID",
-        sorter: {
-            compare: (a, b) => {
-                a = a.EmpID.toLowerCase();
-                b = b.EmpID.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Name",
-        dataIndex: "Name",
-        key: "Name",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Name.toLowerCase();
-                b = b.Name.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Designation",
-        dataIndex: "Designation",
-        key: "Designation",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Designation.toLowerCase();
-                b = b.Designation.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Current Shift",
-        dataIndex: "CurrentShift",
-        key: "CurrentShift",
-        sorter: {
-            compare: (a, b) => {
-                a = a.CurrentShift.toLowerCase();
-                b = b.CurrentShift.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Requested Shift",
-        dataIndex: "RequestedShift",
-        key: "RequestedShift",
-        sorter: {
-            compare: (a, b) => {
-                a = a.RequestedShift.toLowerCase();
-                b = b.RequestedShift.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Requested On",
-        dataIndex: "RequestedOn",
-        key: "RequestedOn",
-        sorter: {
-            compare: (a, b) => {
-                a = a.RequestedOn.toLowerCase();
-                b = b.RequestedOn.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Status",
-        dataIndex: "Status",
-        key: "Status",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Status.toLowerCase();
-                b = b.Status.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "",
-        key: "action",
-        sorter: false,
-    },
-]
-
-const rowSelection = {
-    onChange: () => { },
-    onSelect: () => { },
-    onSelectAll: () => { },
-};
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
+import axios from "@/plugins/axios";
 import moment from "moment";
 import DateRangePicker from "daterangepicker";
+import "daterangepicker/daterangepicker.css";
+
 export default {
-    data() {
-        return {
-            data,
-            columns,
-            rowSelection,
-            searchQuery: '',
-            currentPage: 1,
-            pageSize: 10,
-        }
-    },
-    methods: {
-        getImageUrl(imageName) {
-            return new URL(`/src/assets/img/users/${imageName}`, import.meta.url)
-                .href;
-        },
-    },
-    setup() {
-        const dateRangeInput = ref(null);
+  data() {
+    return {
+      requests: [],
+      loading: false,
 
-        // Move the function declaration outside of the onMounted callback
-        function booking_range(start, end) {
-            return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-        }
+      filters: {
+        status: "",
+        designation: "",
+        startDate: "",
+        endDate: "",
+        search: ""
+      },
 
-        onMounted(() => {
-            if (dateRangeInput.value) {
-                const start = moment().subtract(6, "days");
-                const end = moment();
+      pagination: {
+        page: 1,
+        limit: 10,
+        totalPages: 1
+      },
 
-                new DateRangePicker(
-                    dateRangeInput.value,
-                    {
-                        startDate: start,
-                        endDate: end,
-                        ranges: {
-                            Today: [moment(), moment()],
-                            Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-                            "Last 7 Days": [moment().subtract(6, "days"), moment()],
-                            "Last 30 Days": [moment().subtract(29, "days"), moment()],
-                            "This Month": [moment().startOf("month"), moment().endOf("month")],
-                            "Last Month": [
-                                moment().subtract(1, "month").startOf("month"),
-                                moment().subtract(1, "month").endOf("month"),
-                            ],
-                        },
-                    },
-                    booking_range
-                );
+      columns: [
+        { title: "Employee", key: "employee" },
+        { title: "Designation", key: "designation" },
+        { title: "Current Shift", key: "currentShift" },
+        { title: "Requested Shift", key: "requestedShift" },
+        { title: "Status", key: "status" },
+        { title: "Action", key: "action" }
+      ]
+    };
+  },
 
-                booking_range(start, end);
-            }
-        });
+  computed: {
+    canApprove() {
+      const role = localStorage.getItem("role");
+      return ["MANAGER", "HR", "ADMIN"].includes(role);
+    }
+  },
 
-        return {
-            dateRangeInput,
+  mounted() {
+    this.initDateRange();
+    this.fetchData();
+  },
+
+  methods: {
+    async fetchData() {
+      try {
+        this.loading = true;
+
+        const params = {
+          page: this.pagination.page,
+          limit: this.pagination.limit,
+          status: this.filters.status || undefined,
+          designation: this.filters.designation || undefined,
+          startDate: this.filters.startDate || undefined,
+          endDate: this.filters.endDate || undefined
         };
+
+        const res = await axios.get("/shift-swap-requests", { params });
+
+        this.requests = res.data.data;
+        this.pagination.totalPages = res.data.pagination.totalPages;
+
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.loading = false;
+      }
     },
-    computed: {
-        filteredPages() {
-            const query = this.searchQuery.toLowerCase();
-            return this.data.filter((record) => {
-                return (
-                    record.EmpID.toLowerCase().includes(query) ||
-                    record.Name.toLowerCase().includes(query) ||
-                    record.Designation.toLowerCase().includes(query) ||
-                    record.CurrentShift.toLowerCase().includes(query) ||
-                    record.RequestedShift.toLowerCase().includes(query) ||
-                    record.RequestedOn.toLowerCase().includes(query) ||
-                    record.Status.toLowerCase().includes(query)
-                );
-            });
-        },
-        paginatedData() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            return this.filteredPages.slice(start, start + this.pageSize);
-        },
-        totalPages() {
-            return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
-        },
+
+    changePage(page) {
+      this.pagination.page = page;
+      this.fetchData();
     },
-}
+
+    async updateStatus(id, status) {
+      try {
+        await axios.patch(`/shift-swap-requests/${id}/status`, { status });
+        this.fetchData();
+      } catch (err) {
+        console.error(err);
+      }
+    },
+
+    viewRequest(record) {
+      this.$router.push(`/attendance/shift-swap/${record.id}`);
+    },
+
+    statusClass(status) {
+      switch (status) {
+        case "PENDING":
+          return "bg-info";
+        case "APPROVED_BY_MANAGER":
+        case "APPROVED_BY_HR":
+          return "bg-primary";
+        case "APPROVED_FINAL":
+          return "bg-success";
+        case "REJECTED":
+          return "bg-danger";
+        default:
+          return "bg-secondary";
+      }
+    },
+
+    initDateRange() {
+      const el = this.$refs.dateRangeInput;
+      if (!el) return;
+
+      const start = moment().subtract(6, "days");
+      const end = moment();
+
+      const self = this;
+
+      new DateRangePicker(el, {
+        startDate: start,
+        endDate: end,
+        ranges: {
+          Today: [moment(), moment()],
+          "Last 7 Days": [moment().subtract(6, "days"), moment()],
+          "Last 30 Days": [moment().subtract(29, "days"), moment()]
+        }
+      }, function (start, end) {
+        self.filters.startDate = start.format("YYYY-MM-DD");
+        self.filters.endDate = end.format("YYYY-MM-DD");
+        self.fetchData();
+      });
+    },
+
+    debouncedFetch: (() => {
+      let timeout;
+      return function () {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+          this.fetchData();
+        }, 500);
+      };
+    })()
+  }
+};
 </script>
