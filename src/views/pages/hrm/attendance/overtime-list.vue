@@ -1,297 +1,341 @@
 <script>
 import "daterangepicker/daterangepicker.css";
 import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
+
+import { ref, reactive, onMounted, watch } from "vue";
 import moment from "moment";
 import DateRangePicker from "daterangepicker";
 
+import api from "@/services/api";
+
 export default {
-    data() {
-        return {
-            title: "Overtime",
-            text: "Attendance",
-            text1: "Overtime",
-        }
-    },
-    methods: {
-        toggleHeader() {
-            document.getElementById("collapse-header").classList.toggle("active");
-            document.body.classList.toggle("header-collapse");
-        },
-    },
-    setup() {
-        const dateRangeInput = ref(null);
+  setup() {
+    const title = "Overtime";
+    const text = "Attendance";
+    const text1 = "Overtime";
 
-        // Move the function declaration outside of the onMounted callback
-        function booking_range(start, end) {
-            return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-        }
+    const dateRangeInput = ref(null);
 
-        onMounted(() => {
-            if (dateRangeInput.value) {
-                const start = moment().subtract(6, "days");
-                const end = moment();
+    const loading = ref(false);
+    const error = ref(null);
 
-                new DateRangePicker(
-                    dateRangeInput.value,
-                    {
-                        startDate: start,
-                        endDate: end,
-                        ranges: {
-                            Today: [moment(), moment()],
-                            Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-                            "Last 7 Days": [moment().subtract(6, "days"), moment()],
-                            "Last 30 Days": [moment().subtract(29, "days"), moment()],
-                            "This Month": [moment().startOf("month"), moment().endOf("month")],
-                            "Last Month": [
-                                moment().subtract(1, "month").startOf("month"),
-                                moment().subtract(1, "month").endOf("month"),
-                            ],
-                        },
-                    },
-                    booking_range
-                );
+    const overtimeList = ref([]);
+    const stats = ref({
+      overtimeEmployees: 0,
+      overtimeHours: 0,
+      pendingRequests: 0,
+      rejected: 0,
+    });
 
-                booking_range(start, end);
-            }
+    const filters = reactive({
+      startDate: moment().subtract(6, "days").format("YYYY-MM-DD"),
+      endDate: moment().format("YYYY-MM-DD"),
+      employeeId: null,
+      projectId: null,
+      status: null,
+      page: 1,
+      limit: 10,
+    });
+
+    // -------------------------
+    // Fetch Stats
+    // -------------------------
+    const fetchStats = async () => {
+      try {
+        const { data } = await api.get("/hrm/overtime/stats", {
+          params: {
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+          },
         });
 
-        return {
-            dateRangeInput,
-        };
-    },
-}
+        if (data?.success) {
+          stats.value = data.data;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    // -------------------------
+    // Fetch Overtime List
+    // -------------------------
+    const fetchOvertime = async () => {
+      loading.value = true;
+      error.value = null;
+
+      try {
+        const { data } = await api.get("/hrm/overtime", {
+          params: {
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            employeeId: filters.employeeId,
+            projectId: filters.projectId,
+            status: filters.status,
+            page: filters.page,
+            limit: filters.limit,
+          },
+        });
+
+        if (data?.success) {
+          overtimeList.value = data.data;
+        }
+      } catch (err) {
+        error.value =
+          err?.response?.data?.message || "Failed to load overtime data";
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    // -------------------------
+    // Date Range Picker
+    // -------------------------
+    function initDatePicker() {
+      if (!dateRangeInput.value) return;
+
+      const start = moment().subtract(6, "days");
+      const end = moment();
+
+      new DateRangePicker(
+        dateRangeInput.value,
+        {
+          startDate: start,
+          endDate: end,
+          ranges: {
+            Today: [moment(), moment()],
+            Yesterday: [
+              moment().subtract(1, "days"),
+              moment().subtract(1, "days"),
+            ],
+            "Last 7 Days": [moment().subtract(6, "days"), moment()],
+            "Last 30 Days": [moment().subtract(29, "days"), moment()],
+            "This Month": [
+              moment().startOf("month"),
+              moment().endOf("month"),
+            ],
+            "Last Month": [
+              moment().subtract(1, "month").startOf("month"),
+              moment().subtract(1, "month").endOf("month"),
+            ],
+          },
+        },
+        (start, end) => {
+          filters.startDate = start.format("YYYY-MM-DD");
+          filters.endDate = end.format("YYYY-MM-DD");
+
+          fetchStats();
+          fetchOvertime();
+        }
+      );
+    }
+
+    // -------------------------
+    // Watch Filters
+    // -------------------------
+    watch(
+      () => [
+        filters.employeeId,
+        filters.projectId,
+        filters.status,
+        filters.page,
+      ],
+      () => {
+        fetchOvertime();
+      }
+    );
+
+    // -------------------------
+    // Header Toggle
+    // -------------------------
+    const toggleHeader = () => {
+      document
+        .getElementById("collapse-header")
+        ?.classList.toggle("active");
+      document.body.classList.toggle("header-collapse");
+    };
+
+    // -------------------------
+    // Lifecycle
+    // -------------------------
+    onMounted(() => {
+      initDatePicker();
+      fetchStats();
+      fetchOvertime();
+    });
+
+    return {
+      title,
+      text,
+      text1,
+      dateRangeInput,
+      overtimeList,
+      stats,
+      loading,
+      error,
+      filters,
+      toggleHeader,
+    };
+  },
+};
 </script>
 
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <div class="page-wrapper">
+    <div class="content">
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <breadcrumb :title="title" :text="text" :text1="text1" />
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <breadcrumb :title="title" :text="text" :text1="text1" />
-                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-                    <div class="me-2 mb-2">
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-file-export me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_overtime"
-                            class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add
-                            Overtime</a>
-                    </div>
-                    <div class="head-icons ms-2">
-                        <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-                            data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-                            <i class="ti ti-chevrons-up"></i>
-                        </a>
-                    </div>
-                </div>
+        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+          <div class="me-2 mb-2">
+            <div class="dropdown">
+              <a
+                href="javascript:void(0);"
+                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+              >
+                <i class="ti ti-file-export me-1"></i>Export
+              </a>
+              <ul class="dropdown-menu dropdown-menu-end p-3">
+                <li>
+                  <a class="dropdown-item rounded-1">Export as PDF</a>
+                </li>
+                <li>
+                  <a class="dropdown-item rounded-1">Export as Excel</a>
+                </li>
+              </ul>
             </div>
-            <!-- /Breadcrumb -->
+          </div>
 
-            <!-- Overtime Counts -->
-            <div class="row">
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center flex-wrap justify-content-between">
-                                <div>
-                                    <p class="fs-12 fw-medium mb-0 text-gray-5">Overtime Employee</p>
-                                    <h4>12</h4>
-                                </div>
-                                <div>
-                                    <span
-                                        class="p-2 br-10 bg-transparent-primary border border-primary d-flex align-items-center justify-content-center"><i
-                                            class="ti ti-user-check text-primary fs-18"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center flex-wrap justify-content-between">
-                                <div>
-                                    <p class="fs-12 fw-medium mb-0 text-gray-5">Overtime Hours</p>
-                                    <h4>118</h4>
-                                </div>
-                                <div>
-                                    <span
-                                        class="p-2 br-10 bg-pink-transparent border border-pink d-flex align-items-center justify-content-center"><i
-                                            class="ti ti-user-edit text-pink fs-18"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center flex-wrap justify-content-between">
-                                <div>
-                                    <p class="fs-12 fw-medium mb-0 text-gray-5">Pending Request</p>
-                                    <h4>23</h4>
-                                </div>
-                                <div>
-                                    <span
-                                        class="p-2 br-10 bg-transparent-purple border border-purple d-flex align-items-center justify-content-center"><i
-                                            class="ti ti-user-exclamation text-purple fs-18"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-xl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center flex-wrap justify-content-between">
-                                <div>
-                                    <p class="fs-12 fw-medium mb-0 text-gray-5">Rejected</p>
-                                    <h4>5</h4>
-                                </div>
-                                <div>
-                                    <span
-                                        class="p-2 br-10 bg-skyblue-transparent border border-skyblue d-flex align-items-center justify-content-center"><i
-                                            class="ti ti-user-exclamation text-skyblue fs-18"></i></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          <div class="mb-2">
+            <a
+              href="javascript:void(0);"
+              data-bs-toggle="modal"
+              data-bs-target="#add_overtime"
+              class="btn btn-primary d-flex align-items-center"
+            >
+              <i class="ti ti-circle-plus me-2"></i>Add Overtime
+            </a>
+          </div>
+
+          <div class="head-icons ms-2">
+            <a
+              href="javascript:void(0);"
+              id="collapse-header"
+              @click="toggleHeader"
+            >
+              <i class="ti ti-chevrons-up"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Overtime Employee</p>
+              <h4>{{ stats.overtimeEmployees }}</h4>
             </div>
-            <!-- /Overtime Counts -->
-
-            <!-- Performance Indicator list -->
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                    <h5>Overtime</h5>
-                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                        <div class="me-3">
-                            <div class="input-icon-end position-relative">
-                                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                                    placeholder="dd/mm/yyyy - dd/mm/yyyy">
-                                <span class="input-icon-addon">
-                                    <i class="ti ti-chevron-down"></i>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Employee
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Anthony Lewis</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Brian Villalobos</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Harvey Smith</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Project
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Office Management</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Project Management</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Hospital
-                                        Administration</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Select Status
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Accepted</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Rejected</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Sort By : Last 7 Days
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="custom-datatable-filter table-responsive">
-                        <overtime-table></overtime-table>
-                    </div>
-                </div>
-            </div>
-            <!-- /Performance Indicator list -->
-
+          </div>
         </div>
 
-        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-            <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
-            <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Overtime Hours</p>
+              <h4>{{ stats.overtimeHours }}</h4>
+            </div>
+          </div>
         </div>
 
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Pending Request</p>
+              <h4>{{ stats.pendingRequests }}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Rejected</p>
+              <h4>{{ stats.rejected }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters + Table -->
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center flex-wrap"
+        >
+          <h5>Overtime</h5>
+
+          <div class="d-flex flex-wrap align-items-center">
+            <div class="me-3">
+              <input
+                ref="dateRangeInput"
+                type="text"
+                class="form-control"
+                placeholder="Select date range"
+              />
+            </div>
+
+            <div class="dropdown me-3">
+              <button class="btn btn-white dropdown-toggle" data-bs-toggle="dropdown">
+                Status
+              </button>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item" @click="filters.status = 'APPROVED'">
+                    Approved
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" @click="filters.status = 'REJECTED'">
+                    Rejected
+                  </a>
+                </li>
+                <li>
+                  <a class="dropdown-item" @click="filters.status = 'PENDING'">
+                    Pending
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div v-if="loading" class="p-3">Loading...</div>
+          <div v-else-if="error" class="p-3 text-danger">
+            {{ error }}
+          </div>
+
+          <div v-else class="table-responsive">
+            <overtime-table :rows="overtimeList" />
+          </div>
+        </div>
+      </div>
     </div>
-    <!-- /Page Wrapper -->
 
-    <overtime-modal></overtime-modal>
+    <div
+      class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3"
+    >
+      <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
+    </div>
+  </div>
+
+  <overtime-modal />
 </template>
