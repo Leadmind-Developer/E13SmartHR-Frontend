@@ -1,5 +1,5 @@
 <script>
-import axios from "@/utils/axios"; // adjust to your axios instance
+import api from "@/services/api";
 
 export default {
   data() {
@@ -48,7 +48,7 @@ export default {
     async fetchAttendance() {
       this.loading = true;
       try {
-        const res = await axios.get("/attendance/admin", {
+        const res = await api.get("/attendance/admin", {
           params: {
             date: this.filters.date,
             page: this.filters.page,
