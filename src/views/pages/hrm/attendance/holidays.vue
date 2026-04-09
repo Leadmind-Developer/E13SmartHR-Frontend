@@ -1,6 +1,7 @@
 <template>
     <layout-header></layout-header>
     <layout-sidebar></layout-sidebar>
+    <FullCalendar :options="calendarOptions" />
     <!-- Page Wrapper -->
     <div class="page-wrapper">
         <div class="content">
@@ -199,6 +200,9 @@
                                                             <i class="ti ti-trash me-2"></i>Delete</a>
                                                     </li>
                                                 </ul>
+                                                <input type="file" @change="uploadFile" />
+                                                <button @click="approveHoliday(item.id)">Approve</button>
+                                               <button @click="publishHoliday(item.id)">Publish</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -215,6 +219,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import api from "@/services/api";
+import FullCalendar from "@fullcalendar/vue3";
+import dayGridPlugin from "@fullcalendar/daygrid";
 
 const holidays = ref([]);
 const loading = ref(false);
@@ -284,6 +290,31 @@ const resetForm = () => {
     type: "company",
     status: "active",
   };
+};
+
+const filters = ref({
+  type: "",
+  status: "",
+  locationId: "",
+  startDate: "",
+  endDate: "",
+});
+
+const calendarOptions = {
+  plugins: [dayGridPlugin],
+  initialView: "dayGridMonth",
+  events: holidays.value.map((h) => ({
+    title: h.title,
+    date: h.date,
+  })),
+};
+
+const uploadFile = async (e) => {
+  const formData = new FormData();
+  formData.append("file", e.target.files[0]);
+
+  await api.post("/holidays/import", formData);
+  fetchHolidays();
 };
 
 onMounted(fetchHolidays);
