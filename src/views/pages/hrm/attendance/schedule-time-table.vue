@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
-import axios from "axios";
-
+import api from "@/service/api";
 /**
  * =========================
  * STATE
@@ -27,7 +26,7 @@ const fetchSchedules = async () => {
   loading.value = true;
 
   try {
-    const { data } = await axios.get("/api/schedules", {
+    const { data } = await api.get("/api/schedules", {
       params: {
         page: currentPage.value,
         limit: pageSize.value,
