@@ -160,7 +160,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
-import axios from "@/utils/axios"; // your axios instance
+import api from "@/services/api";
 import debounce from "lodash/debounce";
 
 /* --------------------------------
@@ -220,7 +220,7 @@ const fetchData = async () => {
   loading.value = true;
 
   try {
-    const res = await axios.get("/wfh", {
+    const res = await api.get("/wfh", {
       params: {
         page: pagination.value.page,
         limit: pagination.value.limit,
@@ -244,7 +244,7 @@ const debouncedFetch = debounce(fetchData, 400);
  * -------------------------------- */
 const updateStatus = async (record, status) => {
   try {
-    await axios.patch(`/wfh/${record.id}/status`, { status });
+    await api.patch(`/wfh/${record.id}/status`, { status });
     fetchData();
   } catch (err) {
     alert(err.response?.data?.message || "Error updating status");
@@ -255,7 +255,7 @@ const deleteRecord = async (record) => {
   if (!confirm("Delete this request?")) return;
 
   try {
-    await axios.delete(`/wfh/${record.id}`);
+    await api.delete(`/wfh/${record.id}`);
     fetchData();
   } catch (err) {
     alert("Delete failed");
