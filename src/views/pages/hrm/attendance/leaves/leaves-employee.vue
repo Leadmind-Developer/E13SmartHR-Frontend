@@ -1,10 +1,9 @@
 <script>
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
+import api from "@/services/api";
 import moment from "moment";
 import DateRangePicker from "daterangepicker";
+import "daterangepicker/daterangepicker.css";
 
 export default {
   data() {
@@ -14,21 +13,108 @@ export default {
       text1: "Leaves Employee",
     };
   },
+
   methods: {
     toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
+      document.getElementById("collapse-header")?.classList.toggle("active");
       document.body.classList.toggle("header-collapse");
     },
   },
+
   setup() {
     const dateRangeInput = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
+    const loading = ref(false);
+    const leaves = ref([]);
+
+    const meta = reactive({
+      page: 1,
+      pages: 1,
+      total: 0,
+    });
+
+    const filters = reactive({
+      type: "",
+      status: "",
+      from: "",
+      to: "",
+    });
+
+    const stats = reactive({
+      total: 0,
+      remaining: 0,
+      annual: 0,
+      medical: 0,
+      casual: 0,
+      other: 0,
+    });
+
+    /**
+     * LOAD LEAVES
+     */
+    const fetchLeaves = async () => {
+      loading.value = true;
+
+      try {
+        const res = await api.get("/leaves", {
+          params: {
+            page: meta.page,
+            limit: 10,
+            ...filters,
+          },
+        });
+
+        const payload = res.data;
+
+        leaves.value = payload.data;
+        meta.total = payload.meta?.total || 0;
+        meta.pages = payload.meta?.pages || 1;
+      } catch (err) {
+        console.error("Failed to load leaves:", err.message);
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    /**
+     * LOAD STATS (derived from backend list)
+     */
+    const computeStats = computed(() => {
+      const result = {
+        total: leaves.value.length,
+        annual: 0,
+        medical: 0,
+        casual: 0,
+        other: 0,
+        remaining: 0,
+      };
+
+      leaves.value.forEach((l) => {
+        const type = (l.type || "").toLowerCase();
+
+        if (type.includes("annual")) result.annual++;
+        else if (type.includes("medical")) result.medical++;
+        else if (type.includes("casual")) result.casual++;
+        else result.other++;
+      });
+
+      result.remaining = Math.max(0, 30 - result.total);
+
+      return result;
+    });
+
+    /**
+     * DATE RANGE PICKER
+     */
+    function onRangeChange(start, end) {
+      filters.from = start.format("YYYY-MM-DD");
+      filters.to = end.format("YYYY-MM-DD");
+      fetchLeaves();
     }
 
     onMounted(() => {
+      fetchLeaves();
+
       if (dateRangeInput.value) {
         const start = moment().subtract(6, "days");
         const end = moment();
@@ -40,275 +126,168 @@ export default {
             endDate: end,
             ranges: {
               Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
               "Last 7 Days": [moment().subtract(6, "days"), moment()],
               "Last 30 Days": [moment().subtract(29, "days"), moment()],
               "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
             },
           },
-          booking_range
+          onRangeChange
         );
-
-        booking_range(start, end);
       }
     });
 
     return {
       dateRangeInput,
+      leaves,
+      loading,
+      meta,
+      filters,
+      stats: computeStats,
+      fetchLeaves,
     };
   },
 };
 </script>
 
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-  <!-- Page Wrapper -->
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+
+        <div class="d-flex right-content align-items-center flex-wrap">
+
           <div class="me-2 mb-2">
             <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
+              <a class="btn btn-white dropdown-toggle" data-bs-toggle="dropdown">
+                Export
               </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
+              <ul class="dropdown-menu dropdown-menu-end p-2">
+                <li><a class="dropdown-item">Export PDF</a></li>
+                <li><a class="dropdown-item">Export Excel</a></li>
               </ul>
             </div>
           </div>
+
           <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_leaves"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Leave</a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
+            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_leaves">
+              Add Leave
             </a>
           </div>
+
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Leaves Info -->
+      <!-- STATS -->
       <div class="row">
         <div class="col-xl-3 col-md-6">
-          <div class="card bg-black-le">
+          <div class="card">
             <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="text-start">
-                  <p class="mb-1">Annual Leaves</p>
-                  <h4>05</h4>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-2">
-                    <span class="avatar avatar-md d-flex">
-                      <i class="ti ti-calendar-event fs-32"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <span class="badge bg-secondary-transparent">Remaining Leaves : 07</span>
+              <p>Total Leaves</p>
+              <h4>{{ stats.total }}</h4>
             </div>
           </div>
         </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card bg-blue-le">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="text-start">
-                  <p class="mb-1">Medical Leaves</p>
-                  <h4>11</h4>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-2">
-                    <span class="avatar avatar-md d-flex">
-                      <i class="ti ti-vaccine fs-32"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <span class="badge bg-info-transparent">Remaining Leaves : 01</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card bg-purple-le">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="text-start">
-                  <p class="mb-1">Casual Leaves</p>
-                  <h4>02</h4>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-2">
-                    <span class="avatar avatar-md d-flex">
-                      <i class="ti ti-hexagon-letter-c fs-32"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <span class="badge bg-transparent-purple">Remaining Leaves : 10</span>
-            </div>
-          </div>
-        </div>
-        <div class="col-xl-3 col-md-6">
-          <div class="card bg-pink-le">
-            <div class="card-body">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="text-start">
-                  <p class="mb-1">Other Leaves</p>
-                  <h4>07</h4>
-                </div>
-                <div class="d-flex">
-                  <div class="flex-shrink-0 me-2">
-                    <span class="avatar avatar-md d-flex">
-                      <i class="ti ti-hexagonal-prism-plus fs-32"></i>
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <span class="badge bg-pink-transparent">Remaining Leaves : 05</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <!-- /Leaves Info -->
 
-      <!-- Leaves list -->
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <div class="d-flex">
-            <h5 class="me-2">Leave List</h5>
-            <span class="badge bg-primary-transparent me-2">Total Leaves : 48</span>
-            <span class="badge bg-secondary-transparent">Total Remaining Leaves : 23</span>
-          </div>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="me-3">
-              <div class="input-icon-end position-relative">
-                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                  placeholder="dd/mm/yyyy - dd/mm/yyyy" />
-                <span class="input-icon-addon">
-                  <i class="ti ti-chevron-down"></i>
-                </span>
-              </div>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);"
-                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                Leave Type
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Medical Leave</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Casual Leave</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Annual Leave</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);"
-                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                Approved By
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Doglas Martini</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Warren Morales</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Doglas Martini</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);"
-                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                Select Status
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);"
-                    class="dropdown-item rounded-1 d-flex justify-content-start align-items-center"><span
-                      class="rounded-circle bg-transparent-success d-flex justify-content-center align-items-center me-2"><i
-                        class="ti ti-point-filled text-success"></i></span>Approved</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);"
-                    class="dropdown-item rounded-1 d-flex justify-content-start align-items-center"><span
-                      class="rounded-circle bg-transparent-danger d-flex justify-content-center align-items-center me-2"><i
-                        class="ti ti-point-filled text-danger"></i></span>Declined</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);"
-                    class="dropdown-item rounded-1 d-flex justify-content-start align-items-center"><span
-                      class="rounded-circle bg-transparent-purple d-flex justify-content-center align-items-center me-2"><i
-                        class="ti ti-point-filled text-purple"></i></span>New</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <a href="javascript:void(0);"
-                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Annual</p>
+              <h4>{{ stats.annual }}</h4>
             </div>
           </div>
         </div>
-        <leaves-employee-table></leaves-employee-table>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Medical</p>
+              <h4>{{ stats.medical }}</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <p>Remaining</p>
+              <h4>{{ stats.remaining }}</h4>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- /Leaves list -->
-    </div>
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
+
+      <!-- FILTERS -->
+      <div class="card mb-3">
+        <div class="card-body d-flex gap-2 flex-wrap">
+
+          <select v-model="filters.type" @change="fetchLeaves" class="form-control w-auto">
+            <option value="">All Types</option>
+            <option>ANNUAL</option>
+            <option>MEDICAL</option>
+            <option>CASUAL</option>
+          </select>
+
+          <select v-model="filters.status" @change="fetchLeaves" class="form-control w-auto">
+            <option value="">All Status</option>
+            <option>PENDING</option>
+            <option>APPROVED</option>
+            <option>REJECTED</option>
+          </select>
+
+          <input
+            ref="dateRangeInput"
+            class="form-control w-auto"
+            placeholder="Select Date Range"
+          />
+
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="card-header">
+          <h5>Leave List</h5>
+        </div>
+
+        <div class="card-body">
+          <div v-if="loading">Loading...</div>
+
+          <table v-else class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Anomaly</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="l in leaves" :key="l.id">
+                <td>{{ l.type }}</td>
+                <td>{{ l.status }}</td>
+                <td>{{ moment(l.startDate).format("YYYY-MM-DD") }}</td>
+                <td>{{ moment(l.endDate).format("YYYY-MM-DD") }}</td>
+                <td>
+                  <span v-if="l.isAnomaly" class="text-danger">⚠️ Yes</span>
+                  <span v-else>No</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+      </div>
+
     </div>
   </div>
-  <!-- /Page Wrapper -->
 
-  <leaves-employee-modal></leaves-employee-modal>
+  <leaves-employee-modal />
 </template>
