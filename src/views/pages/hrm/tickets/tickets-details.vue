@@ -1,6 +1,19 @@
 <script>
 import api from "@/services/api";
-import { io } from "socket.io-client";
+  
+let io;
+
+async initSocket() {
+  if (!io) {
+    const module = await import("socket.io-client");
+    io = module.io;
+  }
+
+  this.socket = io("https://api.e13solution.com", {
+    auth: {
+      token: localStorage.getItem("accessToken"),
+    },
+  });
 
 export default {
   data() {
@@ -63,7 +76,7 @@ export default {
     initSocket() {
       this.socket = io("https://api.e13solution.com", {
         auth: {
-          token: localStorage.getItem("accessToken"),
+          token: TokenService.getAccessToken(),
         },
       });
 
