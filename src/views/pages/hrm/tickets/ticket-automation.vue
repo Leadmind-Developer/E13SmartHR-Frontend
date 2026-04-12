@@ -1,377 +1,249 @@
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
+  <layout-header />
+  <layout-sidebar />
 
-            <!-- Breadcrumb -->
-            <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-                <div class="my-auto mb-2">
-                    <h2 class="mb-1">Ticket Automation</h2>
-                    <nav>
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                <router-link to="/dashboard"><i class="ti ti-smart-home"></i></router-link>
-                            </li>
-                            <li class="breadcrumb-item">
-                                Tickets
-                            </li>
-                            <li class="breadcrumb-item active" aria-current="page">Ticket Automation</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div class="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-                    <div class="mb-2 me-2">
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                <i class="ti ti-file-export me-1"></i>Export
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                                            class="ti ti-file-type-xls me-1"></i>Export as Excel </a>
-                                </li>
-                            </ul>
-                        </div>
+  <div class="page-wrapper">
+    <div class="content">
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Ticket Automation</h4>
 
-                    </div>
-                    <div class="mb-2">
-                        <a href="javascript:void(0);" class="btn btn-primary d-flex align-items-center"
-                            data-bs-toggle="offcanvas" data-bs-target="#add_modal"><i
-                                class="ti ti-circle-plus me-2"></i>Add New Rule</a>
-                    </div>
-                </div>
-            </div>
-            <!-- /Breadcrumb -->
+        <div class="d-flex gap-2">
+          <select class="form-select" v-model="filters.status" @change="fetchRules">
+            <option value="">All</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+          </select>
 
-            <div class="card">
-                <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-                    <h5>Escalation Rules List</h5>
-                    <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-                        <div class="dropdown me-3">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Select Status
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Active</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Inactive</a>
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="dropdown">
-                            <a href="javascript:void(0);"
-                                class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                                data-bs-toggle="dropdown">
-                                Sort By : Last 7 Days
-                            </a>
-                            <ul class="dropdown-menu  dropdown-menu-end p-3">
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                                </li>
-                                <li>
-                                    <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="custom-datatable-filter table-responsive rounded-0">
-                        <table class="table">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th class="no-sort">
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox" id="select-all">
-                                        </div>
-                                    </th>
-                                    <th>Rule ID</th>
-                                    <th>Rule Name</th>
-                                    <th>Trigger Event</th>
-                                    <th>Condition</th>
-                                    <th>Action</th>
-                                    <th>Assigned To</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                    </td>
-                                    <td>#ER005</td>
-                                    <td>
-                                        <p class="text-dark fw-medium mb-0">Auto Assign IT Login Issues</p>
-                                    </td>
-                                    <td>Ticket Created</td>
-                                    <td>Category = Login Issue</td>
-                                    <td>Assign Ticket</td>
-                                    <td>Assigned Agent</td>
-                                    <td><span class="badge badge-success d-inline-flex align-items-center badge-xs"><i
-                                                class="ti ti-point-filled me-1"></i>Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                    </td>
-                                    <td>#ER004</td>
-                                    <td>
-                                        <p class="text-dark fw-medium mb-0">Critical Ticket Alert</p>
-                                    </td>
-                                    <td>Ticket Created</td>
-                                    <td>Priority = Critical</td>
-                                    <td>Send Email Notification</td>
-                                    <td>Support Manager</td>
-                                    <td><span class="badge badge-success d-inline-flex align-items-center badge-xs"><i
-                                                class="ti ti-point-filled me-1"></i>Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                    </td>
-                                    <td>#ER003</td>
-                                    <td>
-                                        <p class="text-dark fw-medium mb-0">SLA Breach Escalation</p>
-                                    </td>
-                                    <td>SLA Breached</td>
-                                    <td>Response Time > SLA</td>
-                                    <td>Escalate Ticket</td>
-                                    <td>Team Lead</td>
-                                    <td><span class="badge badge-success d-inline-flex align-items-center badge-xs"><i
-                                                class="ti ti-point-filled me-1"></i>Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                    </td>
-                                    <td>#ER002</td>
-                                    <td>
-                                        <p class="text-dark fw-medium mb-0">Auto Close Inactive Tickets</p>
-                                    </td>
-                                    <td>Time Based</td>
-                                    <td>No Update for 7 Days</td>
-                                    <td>Close Ticket</td>
-                                    <td>System</td>
-                                    <td><span class="badge badge-success d-inline-flex align-items-center badge-xs"><i
-                                                class="ti ti-point-filled me-1"></i>Active</span></td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="form-check form-check-md">
-                                            <input class="form-check-input" type="checkbox">
-                                        </div>
-                                    </td>
-                                    <td>#ER001</td>
-                                    <td>
-                                        <p class="text-dark fw-medium mb-0">Priority Change Notification</p>
-                                    </td>
-                                    <td>Priority Updated</td>
-                                    <td>Priority = High</td>
-                                    <td>Send Email Notification</td>
-                                    <td>Assigned Agent</td>
-                                    <td><span class="badge badge-success d-inline-flex align-items-center badge-xs"><i
-                                                class="ti ti-point-filled me-1"></i>Active</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
+          <button class="btn btn-primary" @click="openModal">
+            + Add Rule
+          </button>
         </div>
+      </div>
 
-        <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-            <p class="mb-0">2014 - 2026 &copy; SmartHR.</p>
-            <p>Designed &amp; Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
+      <!-- TABLE -->
+      <div class="card">
+        <div class="card-body p-0">
+          <div v-if="loading" class="p-4 text-center">Loading...</div>
+
+          <table v-else class="table mb-0">
+            <thead>
+              <tr>
+                <th>Rule</th>
+                <th>Trigger</th>
+                <th>Condition</th>
+                <th>Action</th>
+                <th>Assign</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="rule in rules" :key="rule.id">
+                <td>{{ rule.name }}</td>
+                <td>{{ rule.triggerEvent }}</td>
+                <td>
+                  {{ rule.conditionField }}
+                  {{ rule.operator }}
+                  {{ rule.value }}
+                </td>
+                <td>{{ rule.actionType }}</td>
+                <td>{{ rule.assignTo || '-' }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    :class="rule.status === 'ACTIVE' ? 'bg-success' : 'bg-secondary'"
+                  >
+                    {{ rule.status }}
+                  </span>
+                </td>
+              </tr>
+
+              <tr v-if="!rules.length">
+                <td colspan="6" class="text-center p-4">
+                  No rules found
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-
+      </div>
     </div>
-    <!-- /Page Wrapper -->
 
-    <!-- Details -->
-    <div class="offcanvas offcanvas-end offcanvas-medium" tabindex="-1" id="add_modal">
-        <div class="offcanvas-header border-bottom">
-            <h4 class="d-flex align-items-center">Add New Rule</h4>
-            <button type="button" class="btn-close custom-btn-close" data-bs-dismiss="offcanvas" aria-label="Close">
-                <i class="ti ti-x"></i>
-            </button>
-        </div>
-        <div class="offcanvas-body">
-
-            <div class="mb-3 border-bottom">
-                <div class="mb-3">
-                    <label class="form-label">Rule Name</label>
-                    <input type="text" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Assign To</label>
-                    <vue3-select :options="Assign" v-model="selected" placeholder="Select" />
-                </div>
-            </div>
-            <div class="mb-3 border-bottom">
-                <div class="text-dark fw-semibold fs-16 mb-3">Trigger Event</div>
-                <div class="mb-3">
-                    <label class="form-label">Trigger Event</label>
-                    <vue3-select :options="Trigger" v-model="selectedOne" placeholder="Select" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-muted">Trigger Time</label>
-                    <vue3-select :options="TriggerTime" v-model="selectedTwo" placeholder="Select"
-                        :is-disabled="isDisabled" />
-                    <span class="text-muted fs-12">If Trigger = Time Based / SLA Breached</span>
-                </div>
-            </div>
-            <div class="mb-3 border-bottom">
-                <div class="text-dark fw-semibold fs-16 mb-3">Condition</div>
-                <div class="mb-3">
-                    <label class="form-label">Condition Field</label>
-                    <vue3-select :options="Condition" v-model="selectedThree" placeholder="Select" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Operator</label>
-                    <vue3-select :options="Operator" v-model="selectedFour" placeholder="Select" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Value</label>
-                    <input type="text" class="form-control">
-                </div>
-            </div>
-            <div>
-                <div class="text-dark fw-semibold fs-16 mb-3">Action</div>
-                <div class="mb-3">
-                    <label class="form-label">Action Type</label>
-                    <vue3-select :options="Action" v-model="selectedFive" placeholder="Select" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label text-muted">Assign To</label>
-                    <vue3-select :options="AssignTo" v-model="selectedSix" placeholder="Select"
-                        :is-disabled="isDisabled" />
-                </div>
-            </div>
-        </div>
-        <div class="offcanvas-footer p-3 d-flex align-items-center justify-content-end border-top">
-            <button type="button" class="btn btn-light me-2" data-bs-dismiss="offcanvas">Cancel</button>
-            <button type="submit" class="btn btn-primary">Add Rule</button>
-        </div>
+    <!-- FOOTER -->
+    <div class="footer text-center p-3">
+      {{ new Date().getFullYear() }} © SmartHR
     </div>
-    <!-- Details -->
+  </div>
 
-    <!-- Delete Modal -->
-    <div class="modal fade" id="delete_modal">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-body text-center">
-                    <span class="avatar avatar-xl bg-transparent-danger text-danger mb-3">
-                        <i class="ti ti-trash-x fs-36"></i>
-                    </span>
-                    <h4 class="mb-1">Confirm Delete</h4>
-                    <p class="mb-3">You want to delete all the marked items, this cant be undone once you delete.</p>
-                    <div class="d-flex justify-content-center">
-                        <a href="javascript:void(0);" class="btn btn-light me-3" data-bs-dismiss="modal">Cancel</a>
-                        <a href="javascript:void(0);" class="btn btn-danger" data-bs-dismiss="modal">Yes, Delete</a>
-                    </div>
-                </div>
-            </div>
+  <!-- MODAL -->
+  <div class="modal fade" id="ruleModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5>Add Automation Rule</h5>
+          <button class="btn-close" @click="closeModal"></button>
         </div>
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label>Rule Name</label>
+            <input v-model="form.name" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label>Trigger</label>
+            <select v-model="form.triggerEvent" class="form-select">
+              <option value="TICKET_CREATED">Ticket Created</option>
+              <option value="SLA_BREACHED">SLA Breached</option>
+              <option value="PRIORITY_UPDATED">Priority Updated</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label>Condition Field</label>
+            <select v-model="form.conditionField" class="form-select">
+              <option value="category">Category</option>
+              <option value="priority">Priority</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label>Operator</label>
+            <select v-model="form.operator" class="form-select">
+              <option value="=">=</option>
+              <option value=">">></option>
+              <option value="<"><</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label>Value</label>
+            <input v-model="form.value" class="form-control" />
+          </div>
+
+          <div class="mb-3">
+            <label>Action</label>
+            <select v-model="form.actionType" class="form-select">
+              <option value="ASSIGN_TICKET">Assign Ticket</option>
+              <option value="ESCALATE_TICKET">Escalate</option>
+              <option value="CLOSE_TICKET">Close</option>
+              <option value="SEND_EMAIL">Send Email</option>
+            </select>
+          </div>
+
+          <div class="mb-3" v-if="form.actionType === 'ASSIGN_TICKET'">
+            <label>Assign To</label>
+            <input v-model="form.assignTo" class="form-control" />
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-light" @click="closeModal">Cancel</button>
+          <button class="btn btn-primary" @click="createRule" :disabled="saving">
+            {{ saving ? 'Saving...' : 'Save Rule' }}
+          </button>
+        </div>
+
+      </div>
     </div>
-    <!-- /Delete Modal -->
+  </div>
 </template>
 
 <script>
+import api from "@/services/api";
+
 export default {
-    data() {
-        return {
-            Assign: [
-                { value: 'Select', label: 'Select' },
-                { value: 'Assigned Agent', label: 'Assigned Agent' },
-                { value: 'Support Manager', label: 'Support Manager' },
-                { value: 'Team Lead', label: 'Team Lead' },
-                { value: 'System', label: 'System' },
-            ],
-            Trigger: [
-                { value: 'Select', label: 'Select' },
-                { value: 'Ticket Created', label: 'Ticket Created' },
-                { value: 'SLA Breached', label: 'SLA Breached' },
-                { value: 'Time Based', label: 'Time Based' },
-                { value: 'Priority Updated', label: 'Priority Updated' },
-            ],
-            TriggerTime: [
-                { value: 'Select', label: 'Select' },
-                { value: 'SLA Breach', label: 'SLA Breach' },
-                { value: 'Status Based', label: 'Status Based' },
-                { value: 'Priority Based', label: 'Priority Based' },
-                { value: 'Time Based', label: 'Time Based' },
-            ],
-            Condition: [
-                { value: 'Select', label: 'Select' },
-                { value: 'Category = Login Issue', label: 'Category = Login Issue' },
-                { value: 'Priority = Critical', label: 'Priority = Critical' },
-                { value: 'Response Time > SLA', label: 'Response Time > SLA' },
-                { value: 'No Update for 7 Days', label: 'No Update for 7 Days' },
-            ],
-            Operator: [
-                { value: 'Select', label: 'Select' },
-                { value: 'SLA Breach', label: 'SLA Breach' },
-                { value: 'Status Based', label: 'Status Based' },
-                { value: 'Priority Based', label: 'Priority Based' },
-                { value: 'Time Based', label: 'Time Based' },
-            ],
-            Action: [
-                { value: 'Select', label: 'Select' },
-                { value: 'Assign Ticket', label: 'Assign Ticket' },
-                { value: 'Escalate Ticket', label: 'Escalate Ticket' },
-                { value: 'Close Ticket', label: 'Close Ticket' },
-                { value: 'Send Email Notification', label: 'Send Email Notification' },
-            ],
-            AssignTo: [
-                { value: 'Select', label: 'Select' },
-                { value: 'Assigned Agent', label: 'Assigned Agent' },
-                { value: 'Support Manager', label: 'Support Manager' },
-                { value: 'Team Lead', label: 'Team Lead' },
-                { value: 'System', label: 'System' },
-            ],
-            selected: null,
-            selectedOne: null,
-            selectedTwo: null,
-            selectedThree: null,
-            selectedFour: null,
-            selectedFive: null,
-            selectedSix: null,
-        }
+  data() {
+    return {
+      loading: false,
+      saving: false,
+
+      rules: [],
+
+      filters: {
+        status: "",
+      },
+
+      form: {
+        name: "",
+        triggerEvent: "TICKET_CREATED",
+        conditionField: "",
+        operator: "=",
+        value: "",
+        actionType: "ASSIGN_TICKET",
+        assignTo: "",
+        status: "ACTIVE",
+      },
+    };
+  },
+
+  mounted() {
+    this.fetchRules();
+  },
+
+  methods: {
+    async fetchRules() {
+      this.loading = true;
+
+      try {
+        const { data } = await api.get("/tickets/automation", {
+          params: {
+            status: this.filters.status || undefined,
+          },
+        });
+
+        this.rules = data.data;
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.loading = false;
+      }
     },
-    computed: {
-        isDisabled() {
-            return !(this.selectedOne && (this.selectedOne.value === 'SLA Breached' || this.selectedOne.value === 'Time Based'));
-        }
-    }
-}
+
+    async createRule() {
+      this.saving = true;
+
+      try {
+        await api.post("/tickets/automation", this.form);
+
+        this.fetchRules();
+        this.closeModal();
+        this.resetForm();
+      } catch (e) {
+        console.error(e);
+      } finally {
+        this.saving = false;
+      }
+    },
+
+    openModal() {
+      const modal = new bootstrap.Modal(document.getElementById("ruleModal"));
+      modal.show();
+    },
+
+    closeModal() {
+      const el = document.getElementById("ruleModal");
+      const modal = bootstrap.Modal.getInstance(el);
+      modal.hide();
+    },
+
+    resetForm() {
+      this.form = {
+        name: "",
+        triggerEvent: "TICKET_CREATED",
+        conditionField: "",
+        operator: "=",
+        value: "",
+        actionType: "ASSIGN_TICKET",
+        assignTo: "",
+        status: "ACTIVE",
+      };
+    },
+  },
+};
 </script>
