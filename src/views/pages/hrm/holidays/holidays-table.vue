@@ -1,169 +1,110 @@
 <script>
-const data = [
-  {
-    key: "1",
-    Title: "New Year",
-    Date: "01 Jan 2024",
-    Description: "First day of the new year",
-    Status: "Active",
-  },
-  {
-    key: "2",
-    Title: "Martin Luther King Jr. Day",
-    Date: "15 Jan 2024",
-    Description: "Celebrating the civil rights leader",
-    Status: "Active",
-  },
-  {
-    key: "3",
-    Title: "President's Day",
-    Date: "19 Feb 2024",
-    Description: "Honoring past US Presidents",
-    Status: "Active",
-  },
-  {
-    key: "4",
-    Title: "Good Friday",
-    Date: "29 Mar 2024",
-    Description: "Holiday before Easter",
-    Status: "Active",
-  },
-  {
-    key: "5",
-    Title: "Easter Monday",
-    Date: "01 Apr 2024",
-    Description: "Holiday after Easter",
-    Status: "Active",
-  },
-  {
-    key: "6",
-    Title: "Memorial Day",
-    Date: "27 May 2024",
-    Description: "Honors military personnel",
-    Status: "Active",
-  },
-  {
-    key: "7",
-    Title: "Independence Day",
-    Date: "04 Jul 2024",
-    Description: "Celebrates Independence",
-    Status: "Active",
-  },
-  {
-    key: "8",
-    Title: "Labour Day",
-    Date: "02 Sep 2024",
-    Description: "Honors working people",
-    Status: "Inactive",
-  },
-  {
-    key: "9",
-    Title: "Veterans Day",
-    Date: "11 Nov 2024",
-    Description: "Honors military veterans",
-    Status: "Active",
-  },
-  {
-    key: "10",
-    Title: "Christmas Day",
-    Date: "25 Dec 2024",
-    Description: "Celebration of Christmas",
-    Status: "Active",
-  },
-];
-
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Title",
-    dataIndex: "Title",
-    key: "Title",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Title.toLowerCase();
-        b = b.Title.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Date",
-    dataIndex: "Date",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Date.toLowerCase();
-        b = b.Date.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Description",
-    dataIndex: "Description",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Description.toLowerCase();
-        b = b.Description.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Status",
-    dataIndex: "Status",
-    key: "Status",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Status.toLowerCase();
-        b = b.Status.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
+import api from "@/services/api";
 
 export default {
   data() {
     return {
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
+      holidays: [],
+      loading: false,
+      error: null,
+
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
+      totalPages: 1,
+      total: 0,
+
+      rowSelection: {
+        onChange: () => {},
+        onSelect: () => {},
+        onSelectAll: () => {},
+      },
     };
   },
+
   computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
+    filteredHolidays() {
+      const q = this.searchQuery.toLowerCase();
+
+      return this.holidays.filter((h) => {
         return (
-          record.Title.toLowerCase().includes(query) ||
-          record.Date.toLowerCase().includes(query) ||
-          record.Description.toLowerCase().includes(query) ||
-          record.Status.toLowerCase().includes(query)
+          h.title?.toLowerCase().includes(q) ||
+          h.date?.toLowerCase().includes(q) ||
+          h.type?.toLowerCase().includes(q) ||
+          h.status?.toLowerCase().includes(q)
         );
       });
     },
+
     paginatedData() {
       const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+      return this.filteredHolidays.slice(start, start + this.pageSize);
     },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+  },
+
+  watch: {
+    pageSize() {
+      this.currentPage = 1;
+      this.fetchHolidays();
+    },
+    searchQuery() {
+      this.currentPage = 1;
+    },
+  },
+
+  mounted() {
+    this.fetchHolidays();
+  },
+
+  methods: {
+    // =========================
+    // FETCH HOLIDAYS (API)
+    // =========================
+    async fetchHolidays() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const res = await api.get("/holidays", {
+          params: {
+            page: this.currentPage,
+            limit: this.pageSize,
+            search: this.searchQuery || undefined,
+          },
+        });
+
+        const payload = res.data;
+
+        this.holidays = payload.data || [];
+        this.total = payload.meta?.total || 0;
+        this.totalPages = payload.meta?.pages || 1;
+      } catch (err) {
+        this.error =
+          err?.response?.data?.message || "Failed to load holidays";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    changePage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+      this.fetchHolidays();
+    },
+
+    formatStatus(status) {
+      const map = {
+        draft: "badge-warning",
+        approved: "badge-info",
+        published: "badge-success",
+      };
+      return map[status] || "badge-secondary";
+    },
+  },
+
+  watch: {
+    currentPage() {
+      this.fetchHolidays();
     },
   },
 };
@@ -171,82 +112,150 @@ export default {
 
 <template>
   <div class="card-body p-0">
-    <div class="row">
-      <div class="col-sm-12 col-md-6">
-        <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-            <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-              class="form-select form-select-sm">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select> Entries</label></div>
+
+    <!-- HEADER CONTROLS -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label>
+          Rows per page
+          <select v-model="pageSize" class="form-select form-select-sm">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </label>
       </div>
-      <div class="col-sm-12 col-md-6">
-        <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery" type="search"
-              class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0"></label>
-        </div>
+
+      <div class="col-md-6 text-end">
+        <input
+          v-model="searchQuery"
+          type="search"
+          class="form-control form-control-sm"
+          placeholder="Search holidays..."
+        />
       </div>
     </div>
-    <div class="custom-datatable-filter table-responsive">
-      <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-        :row-selection="rowSelection">
+
+    <!-- LOADING STATE -->
+    <div v-if="loading" class="p-3 text-center">
+      Loading holidays...
+    </div>
+
+    <!-- ERROR STATE -->
+    <div v-if="error" class="alert alert-danger">
+      {{ error }}
+    </div>
+
+    <!-- TABLE -->
+    <div v-if="!loading" class="table-responsive">
+      <a-table
+        class="table"
+        :columns="[
+          { title: 'Title', dataIndex: 'title', key: 'title' },
+          { title: 'Date', dataIndex: 'date', key: 'date' },
+          { title: 'Type', dataIndex: 'type', key: 'type' },
+          { title: 'Status', dataIndex: 'status', key: 'status' },
+          { title: '', key: 'action' },
+        ]"
+        :data-source="paginatedData"
+        :pagination="false"
+        :row-selection="rowSelection"
+      >
+
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'Title'">
-            <h6 class="fw-medium">
-              <a href="javascript:void(0);">{{ record.Title }}</a>
-            </h6>
+
+          <!-- TITLE -->
+          <template v-if="column.key === 'title'">
+            <strong>{{ record.title }}</strong>
           </template>
-          <template v-if="column.key === 'Status'">
-            <span class="d-inline-flex align-items-center badge-sm" :class="[
-              'badge',
-              record.Status === 'Active' ? 'badge-success' : 'badge-danger',
-            ]">
-              <i class="ti ti-point-filled me-1"></i>{{ record.Status }}
+
+          <!-- DATE -->
+          <template v-if="column.key === 'date'">
+            {{ new Date(record.date).toLocaleDateString() }}
+          </template>
+
+          <!-- STATUS -->
+          <template v-if="column.key === 'status'">
+            <span
+              class="badge"
+              :class="formatStatus(record.status)"
+            >
+              {{ record.status }}
             </span>
           </template>
+
+          <!-- ACTIONS -->
           <template v-if="column.key === 'action'">
-            <div class="action-icon d-inline-flex">
-              <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_holiday"><i
-                  class="ti ti-edit"></i></a>
-              <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                  class="ti ti-trash"></i></a>
+            <div class="d-flex gap-2">
+
+              <a
+                href="javascript:void(0)"
+                class="text-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#edit_holiday"
+              >
+                Edit
+              </a>
+
+              <a
+                href="javascript:void(0)"
+                class="text-danger"
+                data-bs-toggle="modal"
+                data-bs-target="#delete_modal"
+              >
+                Delete
+              </a>
+
             </div>
           </template>
+
         </template>
       </a-table>
     </div>
-    <div class="row pagination">
-      <div class="col-sm-12 col-md-5">
-        <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-          Showing {{
-            (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-            filteredPages.length) }} of {{
-            filteredPages.length }}
-          entries</div>
+
+    <!-- PAGINATION -->
+    <div class="row mt-3">
+      <div class="col-md-6">
+        Showing
+        {{ (currentPage - 1) * pageSize + 1 }}
+        -
+        {{ Math.min(currentPage * pageSize, total) }}
+        of {{ total }}
       </div>
-      <div class="col-sm-12 col-md-7">
-        <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-          <ul class="pagination">
-            <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-              id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-              </a></li>
-            <li class="paginate_button page-item" :class="{ active: page === currentPage }" v-for="page in totalPages"
-              :key="page">
-              <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-            </li>
-            <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-              id="DataTables_Table_0_next">
-              <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next" tabindex="-1"
-                class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage < totalPages ? currentPage++ : null"><i class="ti ti-chevron-right"></i></a>
-            </li>
-          </ul>
-        </div>
+
+      <div class="col-md-6 text-end">
+        <ul class="pagination justify-content-end">
+
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <a class="page-link" @click.prevent="changePage(currentPage - 1)">
+              Prev
+            </a>
+          </li>
+
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: page === currentPage }"
+          >
+            <a class="page-link" @click.prevent="changePage(page)">
+              {{ page }}
+            </a>
+          </li>
+
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === totalPages }"
+          >
+            <a class="page-link" @click.prevent="changePage(currentPage + 1)">
+              Next
+            </a>
+          </li>
+
+        </ul>
       </div>
     </div>
+
   </div>
 </template>
