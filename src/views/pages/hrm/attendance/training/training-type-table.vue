@@ -1,195 +1,250 @@
 <script>
-const data = [
-    {
-        key: "1",
-        "Type": "Git Training",
-        "Description": "Git training covers managing code changes and collaboration using Git commands and workflows",
-        "Status": "Active"
-    },
-    {
-        key: "2",
-        "Type": "HTML Training",
-        "Description": "HTML training teaches how to create and structure web pages using HTML tags and elements.",
-        "Status": "Active"
-    },
-    {
-        key: "3",
-        "Type": "React Training",
-        "Description": "React training covers building UIs with components, state, and hooks.",
-        "Status": "Active"
-    },
-    {
-        key: "4",
-        "Type": "Nodejs Training",
-        "Description": "Node.js training focuses on building server-side applications using JavaScript.",
-        "Status": "Active"
-    },
-    {
-        key: "5",
-        "Type": "Vuejs Training",
-        "Description": "Vue.js training focuses on building UIs with Vue.js components.",
-        "Status": "Active"
-    }
-]
-
-const columns = [
-    {
-        sorter: false,
-    },
-    {
-        title: "Type",
-        dataIndex: "Type",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Type.toLowerCase();
-                b = b.Type.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Description",
-        dataIndex: "Description",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Description.toLowerCase();
-                b = b.Description.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "Status",
-        dataIndex: "Status",
-        key: "Status",
-        sorter: {
-            compare: (a, b) => {
-                a = a.Status.toLowerCase();
-                b = b.Status.toLowerCase();
-                return a > b ? -1 : b > a ? 1 : 0;
-            },
-        },
-    },
-    {
-        title: "",
-        key: "action",
-        sorter: true
-    },
-]
-
-const rowSelection = {
-    onChange: () => { },
-    onSelect: () => { },
-    onSelectAll: () => { },
-};
+import api from "@/services/api";
 
 export default {
-    data() {
-        return {
-            data,
-            columns,
-            rowSelection,
-            searchQuery: '',
-            currentPage: 1,
-            pageSize: 10,
-        }
+  name: "TrainingTypeTable",
+
+  data() {
+    return {
+      loading: false,
+      trainings: [],
+      total: 0,
+
+      // table state
+      searchQuery: "",
+      currentPage: 1,
+      pageSize: 10,
+
+      // debounce
+      searchTimeout: null,
+    };
+  },
+
+  computed: {
+    columns() {
+      return [
+        {
+          title: "Title",
+          dataIndex: "title",
+          key: "title",
+        },
+        {
+          title: "Type",
+          key: "type",
+          customRender: ({ record }) => record?.TrainingType?.name || "-",
+        },
+        {
+          title: "Trainer",
+          key: "trainer",
+          customRender: ({ record }) => record?.Trainer?.name || "-",
+        },
+        {
+          title: "Status",
+          key: "status",
+        },
+        {
+          title: "Created",
+          key: "createdAt",
+          customRender: ({ record }) =>
+            new Date(record.createdAt).toLocaleDateString(),
+        },
+        {
+          title: "",
+          key: "action",
+        },
+      ];
     },
-    computed: {
-        filteredPages() {
-            const query = this.searchQuery.toLowerCase();
-            return this.data.filter((record) => {
-                return (
-                    record.Type.toLowerCase().includes(query) ||
-                    record.Description.toLowerCase().includes(query) ||
-                    record.Status.toLowerCase().includes(query)
-                );
-            });
-        },
-        paginatedData() {
-            const start = (this.currentPage - 1) * this.pageSize;
-            return this.filteredPages.slice(start, start + this.pageSize);
-        },
-        totalPages() {
-            return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
-        },
+
+    totalPages() {
+      return Math.ceil(this.total / this.pageSize) || 1;
     },
-}
+  },
+
+  watch: {
+    currentPage() {
+      this.fetchTrainings();
+    },
+    pageSize() {
+      this.currentPage = 1;
+      this.fetchTrainings();
+    },
+    searchQuery() {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.currentPage = 1;
+        this.fetchTrainings();
+      }, 500);
+    },
+  },
+
+  mounted() {
+    this.fetchTrainings();
+  },
+
+  methods: {
+    async fetchTrainings() {
+      this.loading = true;
+
+      try {
+        const { data } = await api.get("/trainings", {
+          params: {
+            page: this.currentPage,
+            limit: this.pageSize,
+            search: this.searchQuery,
+          },
+        });
+
+        this.trainings = data?.data?.rows || [];
+        this.total = data?.data?.count || 0;
+      } catch (error) {
+        console.error("Failed to fetch trainings", error);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    handleDelete(record) {
+      this.$emit("delete", record);
+    },
+
+    handleEdit(record) {
+      this.$emit("edit", record);
+    },
+  },
+};
 </script>
 
 <template>
-    <div class="card-body p-0">
-        <div class="row">
-            <div class="col-sm-12 col-md-6">
-                <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-                        <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                            class="form-select form-select-sm">
-                            <option value="10">10</option>
-                            <option value="25">25</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select> Entries</label></div>
-            </div>
-            <div class="col-sm-12 col-md-6">
-                <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery"
-                            type="search" class="form-control form-control-sm" placeholder="Search"
-                            aria-controls="DataTables_Table_0"></label>
-                </div>
-            </div>
-        </div>
-        <div class="custom-datatable-filter table-responsive">
-            <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-                :row-selection="rowSelection">
-                <template #bodyCell="{ column, record }">
-                    <template v-if="column.key === 'Status'">
-                        <span class="badge badge-success d-inline-flex align-items-center badge-xs">
-                            <i class="ti ti-point-filled me-1"></i>{{ record.Status }}
-                        </span>
-                    </template>
-                    <template v-if="column.key === 'action'">
-                        <div class="action-icon d-inline-flex">
-                            <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal"
-                                data-bs-target="#edit_training_type"><i class="ti ti-edit"></i></a>
-                            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                                    class="ti ti-trash"></i></a>
-                        </div>
-                    </template>
-                </template>
-            </a-table>
-        </div>
-        <div class="row pagination">
-            <div class="col-sm-12 col-md-5">
-                <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                    Showing {{
-                        (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-                        filteredPages.length) }} of {{
-                        filteredPages.length }}
-                    entries</div>
-            </div>
-            <div class="col-sm-12 col-md-7">
-                <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-                    <ul class="pagination">
-                        <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-                            id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true"
-                                role="link" data-dt-idx="previous" tabindex="-1" class="page-link"
-                                href="javascript:void(0);" @click.prevent="currentPage > 1 ? currentPage-- : null"><i
-                                    class="ti ti-chevron-left"></i>
-                            </a></li>
-                        <li class="paginate_button page-item" :class="{ active: page === currentPage }"
-                            v-for="page in totalPages" :key="page">
-                            <a href="javascript:void(0);" @click.prevent="currentPage = page"
-                                aria-controls="DataTables_Table_0" role="link" aria-current="page" data-dt-idx="0"
-                                tabindex="0" class="page-link">{{ page }}</a>
-                        </li>
-                        <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-                            id="DataTables_Table_0_next">
-                            <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next"
-                                tabindex="-1" class="page-link" href="javascript:void(0);"
-                                @click.prevent="currentPage < totalPages ? currentPage++ : null"><i
-                                    class="ti ti-chevron-right"></i></a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+  <div class="card-body p-0">
+    <!-- Top Controls -->
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <label class="d-flex align-items-center">
+          <span class="me-2">Rows</span>
+          <select v-model="pageSize" class="form-select form-select-sm w-auto">
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="col-md-6 text-end">
+        <input
+          v-model="searchQuery"
+          type="search"
+          class="form-control form-control-sm w-auto d-inline-block"
+          placeholder="Search trainings..."
+        />
+      </div>
     </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <a-table
+        :columns="columns"
+        :data-source="trainings"
+        :loading="loading"
+        row-key="id"
+        :pagination="false"
+        class="table datatable thead-light"
+      >
+        <template #bodyCell="{ column, record }">
+          <!-- Status -->
+          <template v-if="column.key === 'status'">
+            <span
+              class="badge d-inline-flex align-items-center badge-xs"
+              :class="
+                record.status === 'ACTIVE'
+                  ? 'badge-success'
+                  : 'badge-secondary'
+              "
+            >
+              <i class="ti ti-point-filled me-1"></i>
+              {{ record.status || "N/A" }}
+            </span>
+          </template>
+
+          <!-- Actions -->
+          <template v-if="column.key === 'action'">
+            <div class="action-icon d-inline-flex">
+              <a
+                href="javascript:void(0);"
+                class="me-2"
+                @click="handleEdit(record)"
+              >
+                <i class="ti ti-edit"></i>
+              </a>
+
+              <a href="javascript:void(0);" @click="handleDelete(record)">
+                <i class="ti ti-trash"></i>
+              </a>
+            </div>
+          </template>
+        </template>
+      </a-table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="row mt-3">
+      <div class="col-md-5">
+        <div>
+          Showing
+          {{ (currentPage - 1) * pageSize + 1 }}
+          -
+          {{ Math.min(currentPage * pageSize, total) }}
+          of {{ total }}
+        </div>
+      </div>
+
+      <div class="col-md-7 text-end">
+        <ul class="pagination justify-content-end">
+          <!-- Prev -->
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === 1 }"
+          >
+            <a
+              class="page-link"
+              href="#"
+              @click.prevent="currentPage--"
+            >
+              <i class="ti ti-chevron-left"></i>
+            </a>
+          </li>
+
+          <!-- Pages -->
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: page === currentPage }"
+          >
+            <a
+              href="#"
+              class="page-link"
+              @click.prevent="currentPage = page"
+            >
+              {{ page }}
+            </a>
+          </li>
+
+          <!-- Next -->
+          <li
+            class="page-item"
+            :class="{ disabled: currentPage === totalPages }"
+          >
+            <a
+              class="page-link"
+              href="#"
+              @click.prevent="currentPage++"
+            >
+              <i class="ti ti-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
 </template>
