@@ -1,416 +1,384 @@
+<template>
+  <div class="task-board-wrapper">
+
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border"></div>
+    </div>
+
+    <div
+      v-else
+      class="d-flex align-items-start overflow-auto project-status pb-4"
+    >
+      <div
+        v-for="(column, statusKey) in modules"
+        :key="statusKey"
+        class="p-3 rounded bg-transparent-secondary w-100 me-3"
+      >
+
+        <!-- Column Header -->
+        <div class="bg-white p-2 rounded mb-2">
+          <div class="d-flex align-items-center justify-content-between">
+
+            <div class="d-flex align-items-center">
+              <span
+                class="p-1 d-flex rounded-circle me-2"
+                :class="column.DotBgClass"
+              >
+                <span
+                  class="rounded-circle d-block p-1"
+                  :class="column.DotClass"
+                ></span>
+              </span>
+
+              <h5 class="me-2 mb-0">
+                {{ column.Title }}
+              </h5>
+
+              <span class="badge bg-light rounded-pill">
+                {{ column.Cards.length }}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Cards -->
+        <draggable
+          :list="column.Cards"
+          item-key="id"
+          :group="{ name: 'kanban' }"
+          @change="(evt) => onDragChange(evt, statusKey)"
+        >
+
+          <template #item="{ element }">
+            <div class="card kanban-card mb-2">
+
+              <div class="card-body">
+
+                <!-- badges -->
+                <div class="d-flex justify-content-between mb-3">
+
+                  <div>
+                    <span class="badge bg-outline-dark me-2">
+                      Task
+                    </span>
+
+                    <span
+                      class="badge"
+                      :class="priorityClass(element.priority)"
+                    >
+                      {{ element.priority || "Medium" }}
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <!-- title -->
+                <h6 class="mb-3">
+                  {{ element.title }}
+                </h6>
+
+                <!-- progress -->
+                <div class="d-flex align-items-center mb-2">
+
+                  <div class="progress progress-sm flex-fill">
+                    <div
+                      class="progress-bar"
+                      :style="{
+                        width: progressValue(element) + '%'
+                      }"
+                    ></div>
+                  </div>
+
+                  <span class="ms-2 fw-medium">
+                    {{ progressValue(element) }}%
+                  </span>
+
+                </div>
+
+                <!-- due -->
+                <p class="fw-medium mb-0">
+                  Due on:
+                  <span class="text-gray-9">
+                    {{ formatDate(element.dueDate) }}
+                  </span>
+                </p>
+
+                <!-- footer -->
+                <div
+                  class="d-flex justify-content-between border-top pt-2 mt-2"
+                >
+
+                  <div class="avatar-list-stacked avatar-group-sm">
+
+                    <span
+                      v-for="member in (element.TaskAssignments || []).slice(0,4)"
+                      :key="member.id"
+                      class="avatar avatar-rounded bg-primary"
+                    >
+                      {{
+                        initials(
+                          member?.User?.name ||
+                          "U"
+                        )
+                      }}
+                    </span>
+
+                    <span
+                      v-if="(element.TaskAssignments || []).length > 4"
+                      class="avatar avatar-rounded bg-primary fs-12"
+                    >
+                      +{{ element.TaskAssignments.length - 4 }}
+                    </span>
+
+                  </div>
+
+                  <div class="d-flex align-items-center">
+
+                    <span class="me-2">
+                      <i class="ti ti-message-circle"></i>
+                      {{ element.TaskComments?.length || 0 }}
+                    </span>
+
+                    <span>
+                      <i class="ti ti-paperclip"></i>
+                      {{ element.TaskFiles?.length || 0 }}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+          </template>
+
+        </draggable>
+
+        <!-- Add Task -->
+        <div class="pt-2">
+          <button
+            class="btn btn-white border border-dashed w-100"
+            @click="createQuickTask(statusKey)"
+            :disabled="creatingTask"
+          >
+            <i class="ti ti-plus me-2"></i>
+            New Task
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</template>
+
 <script>
 import { VueDraggableNext } from "vue-draggable-next";
+import api from "@/services/api";
+
 export default {
+  name: "TaskBoardKanban",
+
   components: {
-    draggable: VueDraggableNext,
+    draggable: VueDraggableNext
   },
-  data() {
-    return {
-      modules: {
-        Todo: {
-          DotBgClass: "bg-transparent-purple",
-          DotClass: "bg-purple",
-          Title: "To Do",
-          Count: "02",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Urgent",
-              BadgeClass: "badge bg-danger",
-              Title: "Payment Gatway",
-              ProgressClass: "bg-warning",
-              Width: "40%",
-              DueOn: "18 Apr 2024",
-              Img: "avatar-19.jpg",
-              Img1: "avatar-29.jpg",
-              Img2: "avatar-16.jpg",
-              Img3: "avatar-01.jpg",
-              Img4: "avatar-02.jpg",
-            },
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Medium",
-              BadgeClass: "badge bg-warning",
-              Title: "Patient appointment booking",
-              ProgressClass: "bg-danger",
-              Width: "20%",
-              DueOn: "15 Apr 2024",
-              Img: "avatar-01.jpg",
-              Img1: "avatar-02.jpg",
-              Img2: "avatar-03.jpg",
-              Img3: "avatar-04.jpg",
-              Img4: "avatar-05.jpg",
-            },
-          ],
-        },
-        Pending: {
-          DotBgClass: "bg-soft-pink",
-          DotClass: "bg-pink",
-          Title: "Pending",
-          Count: "13",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Low",
-              BadgeClass: "badge bg-success",
-              Title: "Patient appointment booking",
-              ProgressClass: "bg-danger",
-              Width: "20%",
-              DueOn: "15 Apr 2024",
-              Img: "avatar-19.jpg",
-              Img1: "avatar-29.jpg",
-              Img2: "avatar-16.jpg",
-              Img3: "avatar-01.jpg",
-              Img4: "avatar-02.jpg",
-            },
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Urgent",
-              BadgeClass: "badge bg-danger",
-              Title: "Payment Gateway",
-              ProgressClass: "bg-warning",
-              Width: "40%",
-              DueOn: "15 Apr 2024",
-              Img: "avatar-10.jpg",
-              Img1: "avatar-11.jpg",
-              Img2: "avatar-12.jpg",
-              Img3: "avatar-13.jpg",
-              Img4: "avatar-14.jpg",
-            },
-          ],
-        },
-        Inprogress: {
-          DotBgClass: "bg-soft-skyblue",
-          DotClass: "bg-skyblue",
-          Title: "Inprogress",
-          Count: "04",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Urgent",
-              BadgeClass: "badge bg-danger",
-              Title: "Doctor Module",
-              ProgressClass: "bg-warning",
-              Width: "35%",
-              DueOn: "20 Apr 2024",
-              Img: "avatar-15.jpg",
-              Img1: "avatar-16.jpg",
-              Img2: "avatar-17.jpg",
-              Img3: "avatar-18.jpg",
-              Img4: "avatar-19.jpg",
-            },
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Low",
-              BadgeClass: "badge bg-success",
-              Title: "Inventory and Supplies",
-              ProgressClass: "bg-purple",
-              Width: "60%",
-              DueOn: "21 Apr 2024",
-              Img: "avatar-20.jpg",
-              Img1: "avatar-21.jpg",
-              Img2: "avatar-22.jpg",
-              Img3: "avatar-23.jpg",
-              Img4: "avatar-24.jpg",
-            },
-          ],
-        },
-        Completed: {
-          DotBgClass: "bg-soft-success",
-          DotClass: "bg-success",
-          Title: "Completed",
-          Count: "10",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Medium",
-              BadgeClass: "badge bg-warning",
-              Title: "Billing and Payments",
-              ProgressClass: "bg-success",
-              Width: "100%",
-              DueOn: "22 Apr 2024",
-              Img: "avatar-25.jpg",
-              Img1: "avatar-26.jpg",
-              Img2: "avatar-27.jpg",
-              Img3: "avatar-28.jpg",
-              Img4: "avatar-29.jpg",
-            },
-          ],
-        },
-        OnHold: {
-          DotBgClass: "bg-soft-warning",
-          DotClass: "bg-warning",
-          Title: "On-hold",
-          Count: "10",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Urgent",
-              BadgeClass: "badge bg-danger",
-              Title: "Patient Feedback",
-              ProgressClass: "bg-danger",
-              Width: "15%",
-              DueOn: "22 Apr 2024",
-              Img: "avatar-30.jpg",
-              Img1: "avatar-31.jpg",
-              Img2: "avatar-05.jpg",
-              Img3: "avatar-09.jpg",
-              Img4: "avatar-11.jpg",
-            },
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Low",
-              BadgeClass: "badge bg-success",
-              Title: "Telemedicine Implementation",
-              ProgressClass: "bg-warning",
-              Width: "40%",
-              DueOn: "22 Apr 2024",
-              Img: "avatar-30.jpg",
-              Img1: "avatar-31.jpg",
-              Img2: "avatar-05.jpg",
-              Img3: "avatar-09.jpg",
-              Img4: "avatar-11.jpg",
-            },
-          ],
-        },
-        Review: {
-          DotBgClass: "bg-soft-skyblue",
-          DotClass: "bg-skyblue",
-          Title: "Review",
-          Count: "10",
-          Cards: [
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Medium",
-              BadgeClass: "badge bg-warning",
-              Title: "Patient Feedback",
-              ProgressClass: "bg-success",
-              Width: "100%",
-              DueOn: "16 Apr 2024",
-              Img: "avatar-30.jpg",
-              Img1: "avatar-31.jpg",
-              Img2: "avatar-05.jpg",
-              Img3: "avatar-09.jpg",
-              Img4: "avatar-11.jpg",
-            },
-            {
-              BadgeOne: "Web Layout",
-              BadgeTwo: "Urgent",
-              BadgeClass: "badge bg-danger",
-              Title: "Appointment Scheduling",
-              ProgressClass: "bg-success",
-              Width: "100%",
-              DueOn: "24 Apr 2024",
-              Img: "avatar-20.jpg",
-              Img1: "avatar-21.jpg",
-              Img2: "avatar-22.jpg",
-              Img3: "avatar-23.jpg",
-              Img4: "avatar-24.jpg",
-            },
-          ],
-        },
-      },
-    };
-  },
-  methods: {
-    onDragEnd() {},
-    onModuleDragEnd() {},
-    getImageUrl(imageName) {
-      return new URL(`/src/assets/img/profiles/${imageName}`, import.meta.url).href;
+
+  props: {
+    projectId: {
+      type: [String, Number],
+      required: true
     }
   },
+
+  data() {
+    return {
+      loading: false,
+      creatingTask: false,
+
+      modules: {
+        Todo: {
+          Title: "To Do",
+          DotBgClass: "bg-transparent-purple",
+          DotClass: "bg-purple",
+          Cards: []
+        },
+
+        Pending: {
+          Title: "Pending",
+          DotBgClass: "bg-soft-pink",
+          DotClass: "bg-pink",
+          Cards: []
+        },
+
+        Inprogress: {
+          Title: "In Progress",
+          DotBgClass: "bg-soft-skyblue",
+          DotClass: "bg-skyblue",
+          Cards: []
+        },
+
+        Completed: {
+          Title: "Completed",
+          DotBgClass: "bg-soft-success",
+          DotClass: "bg-success",
+          Cards: []
+        },
+
+        OnHold: {
+          Title: "On Hold",
+          DotBgClass: "bg-soft-warning",
+          DotClass: "bg-warning",
+          Cards: []
+        },
+
+        Review: {
+          Title: "Review",
+          DotBgClass: "bg-soft-skyblue",
+          DotClass: "bg-skyblue",
+          Cards: []
+        }
+      }
+    };
+  },
+
+  mounted() {
+    this.fetchBoard();
+  },
+
+  methods: {
+
+    async fetchBoard() {
+      this.loading = true;
+
+      try {
+        const { data } = await api.get(
+          `/projects/${this.projectId}/board`
+        );
+
+        const board = data?.data || {};
+
+        Object.keys(this.modules).forEach(status => {
+          this.modules[status].Cards =
+            board[status] || [];
+        });
+
+      } catch (e) {
+        console.error("Board load failed", e);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async onDragChange(evt, newStatus) {
+
+      if (!evt.added) return;
+
+      const task = evt.added.element;
+
+      const oldStatus = task.status;
+
+      task.status = newStatus;
+
+      try {
+
+        await api.patch(
+          `/projects/tasks/${task.id}/status`,
+          {
+            status: newStatus
+          }
+        );
+
+      } catch (e) {
+
+        console.error("Move failed", e);
+
+        task.status = oldStatus;
+
+        await this.fetchBoard();
+      }
+    },
+
+    async createQuickTask(status) {
+
+      const title = prompt("Task title");
+
+      if (!title) return;
+
+      this.creatingTask = true;
+
+      try {
+
+        await api.post(
+          `/projects/${this.projectId}/tasks`,
+          {
+            title,
+            status,
+            priority: "Medium"
+          }
+        );
+
+        await this.fetchBoard();
+
+      } catch (e) {
+
+        console.error("Create task failed", e);
+
+      } finally {
+
+        this.creatingTask = false;
+
+      }
+    },
+
+    progressValue(task) {
+      return task.progress || 0;
+    },
+
+    priorityClass(priority) {
+
+      if (priority === "Urgent")
+        return "bg-danger";
+
+      if (priority === "Low")
+        return "bg-success";
+
+      return "bg-warning";
+    },
+
+    formatDate(date) {
+
+      if (!date) return "-";
+
+      return new Date(date)
+        .toLocaleDateString();
+    },
+
+    initials(name) {
+      return name
+        .split(" ")
+        .map(n => n[0])
+        .join("")
+        .slice(0,2)
+        .toUpperCase();
+    }
+
+  }
 };
 </script>
 
-<template>
-  <div class="d-flex align-items-start overflow-auto project-status pb-4">
-    <div
-      class="p-3 rounded bg-transparent-secondary w-100 me-3"
-      v-for="(module, color) in modules"
-      :key="color"
-    >
-      <div class="bg-white p-2 rounded mb-2">
-        <div class="d-flex align-items-center justify-content-between">
-          <div class="d-flex align-items-center">
-            <span class="p-1 d-flex rounded-circle me-2" :class="module.DotBgClass">
-              <span class="rounded-circle d-block p-1" :class="module.DotClass"></span
-            ></span>
-            <h5 class="me-2">{{ module.Title }}</h5>
-            <span class="badge bg-light rounded-pill">{{ module.Count }}</span>
-          </div>
-          <div class="dropdown">
-            <a
-              href="javascript:void(0);"
-              class="d-inline-flex align-items-center"
-              data-bs-toggle="dropdown"
-            >
-              <i class="ti ti-dots-vertical"></i>
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end p-3">
-              <li>
-                <a
-                  href="javascript:void(0);"
-                  class="dropdown-item rounded-1"
-                  data-bs-toggle="modal"
-                  data-bs-target="#edit_task"
-                  ><i class="ti ti-edit me-2"></i>Edit</a
-                >
-              </li>
-              <li>
-                <a
-                  href="javascript:void(0);"
-                  class="dropdown-item rounded-1"
-                  data-bs-toggle="modal"
-                  data-bs-target="#delete_modal"
-                  ><i class="ti ti-trash me-2"></i>Delete</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="kanban-drag-wrap">
-        <draggable
-          :list="module.Cards"
-          :group="{ name: 'kanban', pull: true, put: true }"
-          @end="onDragEnd(color)"
-        >
-          <div v-for="Card in module.Cards" :key="Card.id">
-            <div class="card kanban-card mb-2">
-              <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                  <div class="d-flex align-items-center">
-                    <span class="badge bg-outline-dark me-2">{{ Card.BadgeOne }}</span>
-                    <span
-                      class="badge-xs d-flex align-items-center justify-content-center"
-                      :class="Card.BadgeClass"
-                    >
-                      <i class="fas fa-circle fs-6 me-1"></i>{{ Card.BadgeTwo }}
-                    </span>
-                  </div>
-                  <div class="dropdown">
-                    <a
-                      href="javascript:void(0);"
-                      class="d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i class="ti ti-dots-vertical"></i>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <a
-                          href="javascript:void(0);"
-                          class="dropdown-item rounded-1"
-                          data-bs-toggle="modal"
-                          data-bs-target="#edit_task"
-                          ><i class="ti ti-edit me-2"></i>Edit</a
-                        >
-                      </li>
-                      <li>
-                        <a
-                          href="javascript:void(0);"
-                          class="dropdown-item rounded-1"
-                          data-bs-toggle="modal"
-                          data-bs-target="#delete_modal"
-                          ><i class="ti ti-trash me-2"></i>Delete</a
-                        >
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div class="mb-2">
-                  <h6 class="d-flex align-items-center">{{ Card.Title }}</h6>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <div
-                    class="progress progress-sm flex-fill"
-                    role="progressbar"
-                    aria-label="Basic example"
-                    aria-valuenow="0"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                  >
-                    <div
-                      class="progress-bar"
-                      :class="Card.ProgressClass"
-                      :style="{ width: Card.Width }"
-                    ></div>
-                  </div>
-                  <span class="d-block ms-2 text-gray-9 fw-medium">{{ Card.Width }}</span>
-                </div>
-                <p class="fw-medium mb-0">
-                  Due on : <span class="text-gray-9"> {{ Card.DueOn }}</span>
-                </p>
-                <div
-                  class="d-flex align-items-center justify-content-between border-top pt-2 mt-2"
-                >
-                  <div class="avatar-list-stacked avatar-group-sm me-3">
-                    <span class="avatar avatar-rounded">
-                      <img
-                        class="border border-white"
-                        :src="getImageUrl(Card.Img)"
-                        alt="img"
-                      />
-                    </span>
-                    <span class="avatar avatar-rounded">
-                      <img
-                        class="border border-white"
-                        :src="getImageUrl(Card.Img1)"
-                        alt="img"
-                      />
-                    </span>
-                    <span class="avatar avatar-rounded">
-                      <img
-                        class="border border-white"
-                        :src="getImageUrl(Card.Img2)"
-                        alt="img"
-                      />
-                    </span>
-                    <span class="avatar avatar-rounded">
-                      <img
-                        class="border border-white"
-                        :src="getImageUrl(Card.Img3)"
-                        alt="img"
-                      />
-                    </span>
-                    <span class="avatar avatar-rounded">
-                      <img
-                        class="border border-white"
-                        :src="getImageUrl(Card.Img4)"
-                        alt="img"
-                      />
-                    </span>
-                    <span class="avatar avatar-rounded bg-primary fs-12"> 1+ </span>
-                  </div>
-                  <div class="d-flex align-items-center">
-                    <a
-                      href="javascript:void(0);"
-                      class="d-flex align-items-center text-dark me-2"
-                      ><i class="ti ti-message-circle text-gray me-1"></i>14</a
-                    >
-                    <a
-                      href="javascript:void(0);"
-                      class="d-flex align-items-center text-dark"
-                      ><i class="ti ti-paperclip text-gray me-1"></i>14</a
-                    >
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </draggable>
-      </div>
-      <div class="pt-2">
-        <a
-          href="javascript:void(0);"
-          class="btn btn-white border border-dashed d-flex align-items-center justify-content-center"
-          data-bs-toggle="modal"
-          data-bs-target="#add_task"
-        >
-          <i class="ti ti-plus me-2"></i>
-          New Task
-        </a>
-      </div>
-    </div>
-  </div>
-</template>
+<style scoped>
+.task-board-wrapper{
+min-height:500px;
+}
+
+.kanban-card{
+cursor:grab;
+}
+
+.kanban-card:active{
+cursor:grabbing;
+}
+</style>
