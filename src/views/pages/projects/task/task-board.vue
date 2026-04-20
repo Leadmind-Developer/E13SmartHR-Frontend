@@ -1,241 +1,403 @@
+<template>
+  <layout-header />
+  <layout-sidebar />
+
+  <div class="page-wrapper">
+    <div class="content">
+
+      <!-- Breadcrumb -->
+      <div
+        class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3"
+      >
+        <breadcrumb
+          :title="title"
+          :text="text"
+          :text1="text1"
+        />
+
+        <div class="d-flex align-items-center">
+
+          <button
+            class="btn btn-primary"
+            @click="openTaskModal"
+          >
+            <i class="ti ti-circle-plus me-1"></i>
+            Add Task
+          </button>
+
+          <div class="head-icons ms-3">
+            <a
+              href="javascript:void(0);"
+              id="collapse-header"
+              @click="toggleHeader"
+            >
+              <i class="ti ti-chevrons-up"></i>
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div
+        v-if="loading"
+        class="card p-5 text-center"
+      >
+        <div class="spinner-border"></div>
+      </div>
+
+      <div v-else class="card">
+
+        <!-- Project Header -->
+        <div
+          class="card-header d-flex justify-content-between align-items-center flex-wrap gap-3"
+        >
+          <div>
+            <h4 class="mb-1">
+              {{ project.name || "Project Board" }}
+            </h4>
+
+            <small class="text-muted">
+              {{ project.description || "" }}
+            </small>
+          </div>
+
+          <div class="d-flex gap-4">
+
+            <div>
+              <strong>{{ stats.total }}</strong><br />
+              <small>Total</small>
+            </div>
+
+            <div>
+              <strong>{{ stats.pending }}</strong><br />
+              <small>Pending</small>
+            </div>
+
+            <div>
+              <strong>{{ stats.completed }}</strong><br />
+              <small>Completed</small>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card-body border-bottom">
+          <div class="row g-3">
+
+            <div class="col-md-4">
+              <input
+                v-model="search"
+                class="form-control"
+                placeholder="Search tasks..."
+              />
+            </div>
+
+            <div class="col-md-3">
+              <select
+                v-model="priorityFilter"
+                class="form-control"
+              >
+                <option value="">All Priority</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+
+            <div class="col-md-3">
+              <button
+                class="btn btn-outline-secondary"
+                @click="refreshBoard"
+              >
+                Refresh
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Kanban -->
+        <div class="card-body">
+
+          <div class="kanban-board">
+
+            <div
+              v-for="status in statuses"
+              :key="status"
+              class="kanban-column"
+              @dragover.prevent
+              @drop="handleDrop(status)"
+            >
+              <div class="kanban-header">
+                {{ status }}
+                ({{ filteredTasks(status).length }})
+              </div>
+
+              <div
+                v-for="task in filteredTasks(status)"
+                :key="task.id"
+                class="kanban-card"
+                draggable="true"
+                @dragstart="dragTask(task)"
+              >
+                <h6>
+                  {{ task.title || task.name }}
+                </h6>
+
+                <p v-if="task.description">
+                  {{ task.description }}
+                </p>
+
+                <span
+                  class="badge"
+                  :class="priorityClass(task.priority)"
+                >
+                  {{ task.priority || 'NORMAL' }}
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div
+      class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3"
+    >
+      <p class="mb-0">
+        {{ new Date().getFullYear() }} © E13
+      </p>
+    </div>
+
+  </div>
+
+  <tasks-modal />
+</template>
+
 <script>
-import { ref } from "vue";
-const valueOne = ref(new Date());
-const valueTwo = ref(new Date());
+import api from "@/services/api";
+
 export default {
+  name: "TaskBoard",
+
   data() {
     return {
       title: "Task Board",
       text: "Projects",
       text1: "Task Board",
-      valueOne,
-      valueTwo,
+
+      loading: false,
+
+      projectId: this.$route.params.id,
+
+      project: {},
+
+      board: {},
+
+      stats: {
+        total: 0,
+        pending: 0,
+        completed: 0
+      },
+
+      search: "",
+      priorityFilter: "",
+
+      draggedTask: null,
+
+      statuses: [
+        "Todo",
+        "In Progress",
+        "Completed"
+      ]
     };
   },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
-    },
+
+  async mounted() {
+    await this.loadAll();
   },
+
+  methods: {
+
+    async loadAll() {
+      this.loading = true;
+
+      try {
+        await Promise.all([
+          this.fetchProject(),
+          this.fetchBoard(),
+          this.fetchStats()
+        ]);
+      }
+      catch (e) {
+        console.error(e);
+      }
+      finally {
+        this.loading = false;
+      }
+    },
+
+    async fetchProject() {
+      const { data } = await api.get(
+        `/projects/${this.projectId}`
+      );
+
+      this.project = data.data || {};
+    },
+
+    async fetchBoard() {
+      const { data } = await api.get(
+        `/projects/${this.projectId}/board`
+      );
+
+      this.board = data.data || {};
+    },
+
+    async fetchStats() {
+      const { data } = await api.get(
+        `/projects/${this.projectId}/stats`
+      );
+
+      this.stats = data.data || {};
+    },
+
+    refreshBoard() {
+      this.fetchBoard();
+      this.fetchStats();
+    },
+
+    filteredTasks(status) {
+
+      let tasks = this.board[status] || [];
+
+      if (this.search) {
+        const s = this.search.toLowerCase();
+
+        tasks = tasks.filter(t =>
+          (t.title || t.name || "")
+          .toLowerCase()
+          .includes(s)
+        );
+      }
+
+      if (this.priorityFilter) {
+        tasks = tasks.filter(
+          t => t.priority === this.priorityFilter
+        );
+      }
+
+      return tasks;
+    },
+
+    dragTask(task) {
+      this.draggedTask = task;
+    },
+
+    async handleDrop(newStatus) {
+      if (!this.draggedTask) return;
+
+      if (this.draggedTask.status === newStatus) {
+        return;
+      }
+
+      try {
+
+        await api.patch(
+          `/projects/tasks/${this.draggedTask.id}/status`,
+          {
+            status: newStatus
+          }
+        );
+
+        this.draggedTask = null;
+
+        await this.refreshBoard();
+
+      }
+      catch (e) {
+        console.error("Status update failed", e);
+      }
+    },
+
+    priorityClass(priority) {
+
+      if (priority === "HIGH")
+        return "bg-danger";
+
+      if (priority === "MEDIUM")
+        return "bg-warning";
+
+      if (priority === "LOW")
+        return "bg-success";
+
+      return "bg-secondary";
+    },
+
+    openTaskModal() {
+      const modal = document.getElementById(
+        "add_task_modal"
+      );
+
+      if (modal && window.bootstrap) {
+        new window.bootstrap.Modal(modal).show();
+      }
+    },
+
+    toggleHeader() {
+      document
+        .getElementById("collapse-header")
+        ?.classList.toggle("active");
+
+      document.body.classList.toggle(
+        "header-collapse"
+      );
+    }
+
+  }
 };
 </script>
 
-<template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+<style scoped>
+.kanban-board{
+display:flex;
+gap:20px;
+overflow-x:auto;
+}
 
-  <!-- Page Wrapper -->
-  <div class="page-wrapper">
-    <div class="content">
-      <!-- Breadcrumb -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="dropdown me-2">
-            <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-              data-bs-toggle="dropdown">
-              <i class="ti ti-file-export me-2"></i>
-              Export
-            </a>
-            <ul class="dropdown-menu dropdown-menu-end p-3">
-              <li>
-                <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                    class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-              </li>
-              <li>
-                <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                    class="ti ti-file-type-xls me-1"></i>Export as Excel
-                </a>
-              </li>
-            </ul>
-          </div>
-          <a href="javascript:void(0);" class="btn btn-primary d-inline-flex align-items-center" data-bs-toggle="modal"
-            data-bs-target="#add_board">
-            <i class="ti ti-circle-plus me-1"></i>Add Board
-          </a>
-          <div class="head-icons ms-2 mb-0">
-            <a href="javascript:void(0);" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h4>Hospital Administration</h4>
-          <div class="d-flex align-items-center flex-wrap row-gap-3">
-            <div class="avatar-list-stacked avatar-group-sm me-3">
-              <span class="avatar avatar-rounded">
-                <img class="border border-white" src="@/assets/img/profiles/avatar-19.jpg" alt="img" />
-              </span>
-              <span class="avatar avatar-rounded">
-                <img class="border border-white" src="@/assets/img/profiles/avatar-29.jpg" alt="img" />
-              </span>
-              <span class="avatar avatar-rounded">
-                <img class="border border-white" src="@/assets/img/profiles/avatar-16.jpg" alt="img" />
-              </span>
-              <span class="avatar avatar-rounded bg-primary fs-12"> 1+ </span>
-            </div>
-            <div class="d-flex align-items-center me-3">
-              <p class="mb-0 me-3 pe-3 border-end fs-14">
-                Total Task : <span class="text-dark"> 55 </span>
-              </p>
-              <p class="mb-0 me-3 pe-3 border-end fs-14">
-                Pending : <span class="text-dark"> 15 </span>
-              </p>
-              <p class="mb-0 fs-14">Completed : <span class="text-dark"> 40 </span></p>
-            </div>
-            <div class="input-icon-start position-relative">
-              <span class="input-icon-addon">
-                <i class="ti ti-search"></i>
-              </span>
-              <input type="text" class="form-control" placeholder="Search Project" />
-            </div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-lg-4">
-              <div class="d-flex align-items-center flex-wrap row-gap-3 mb-3">
-                <h6 class="me-2">Priority</h6>
-                <ul class="nav nav-pills border d-inline-flex p-1 rounded bg-light todo-tabs" id="pills-tab"
-                  role="tablist">
-                  <li class="nav-item" role="presentation">
-                    <button
-                      class="nav-link btn btn-sm btn-icon py-3 d-flex align-items-center justify-content-center w-auto active"
-                      data-bs-toggle="pill" data-bs-target="#pills-home" type="button" role="tab" aria-selected="true">
-                      All
-                    </button>
-                  </li>
-                  <li class="nav-item" role="presentation">
-                    <button
-                      class="nav-link btn btn-sm btn-icon py-3 d-flex align-items-center justify-content-center w-auto"
-                      data-bs-toggle="pill" data-bs-target="#pills-contact" type="button" role="tab"
-                      aria-selected="false">
-                      High
-                    </button>
-                  </li>
-                  <li class="nav-item" role="presentation">
-                    <button
-                      class="nav-link btn btn-sm btn-icon py-3 d-flex align-items-center justify-content-center w-auto"
-                      data-bs-toggle="pill" data-bs-target="#pills-medium" type="button" role="tab"
-                      aria-selected="false">
-                      Medium
-                    </button>
-                  </li>
-                  <li class="nav-item" role="presentation">
-                    <button
-                      class="nav-link btn btn-sm btn-icon py-3 d-flex align-items-center justify-content-center w-auto"
-                      data-bs-toggle="pill" data-bs-target="#pills-low" type="button" role="tab" aria-selected="false">
-                      Low
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            <div class="col-lg-8">
-              <div class="d-flex align-items-center justify-content-lg-end flex-wrap row-gap-3 mb-3">
-                <div class="dropdown me-2">
-                  <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown">
-                    Clients
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Clients</a>
-                    </li>
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Sophie</a>
-                    </li>
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Cameron</a>
-                    </li>
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Doris</a>
-                    </li>
-                  </ul>
-                </div>
-                <div class="input-icon w-120 position-relative me-2">
-                  <span class="input-icon-addon">
-                    <i class="ti ti-calendar"></i>
-                  </span>
-                  <a-date-picker v-model="valueOne" class="form-control datetimepicker" placeholder="dd/mm/yyyy" />
-                </div>
-                <div class="input-icon w-120 position-relative me-2">
-                  <span class="input-icon-addon">
-                    <i class="ti ti-calendar"></i>
-                  </span>
-                  <a-date-picker v-model="valueTwo" class="form-control datetimepicker" placeholder="dd/mm/yyyy" />
-                </div>
-                <div class="dropdown me-2">
-                  <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                    data-bs-toggle="dropdown">
-                    Select Status
-                  </a>
-                  <ul class="dropdown-menu dropdown-menu-end p-3">
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Inprogress</a>
-                    </li>
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">On-hold</a>
-                    </li>
-                    <li>
-                      <a href="javascript:void(0);" class="dropdown-item rounded-1">Completed</a>
-                    </li>
-                  </ul>
-                </div>
-                <div class="d-flex align-items-center border rounded p-2">
-                  <span class="d-inline-flex me-2">Sort By : </span>
-                  <div class="dropdown">
-                    <a href="javascript:void(0);"
-                      class="dropdown-toggle one btn btn-white d-inline-flex align-items-center border-0 bg-transparent p-0 text-dark"
-                      data-bs-toggle="dropdown">
-                      Created Date
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <a href="javascript:void(0);" class="dropdown-item rounded-1">Created Date</a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0);" class="dropdown-item rounded-1">High</a>
-                      </li>
-                      <li>
-                        <a href="javascript:void(0);" class="dropdown-item rounded-1">Medium</a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="tab-content" id="pills-tabContent">
-            <div class="tab-pane fade show active" id="pills-home" role="tabpanel">
-              <task-board-kanban></task-board-kanban>
-            </div>
-            <div class="tab-pane fade" id="pills-contact" role="tabpanel">
-              <task-board-kanban></task-board-kanban>
-            </div>
-            <div class="tab-pane fade" id="pills-medium" role="tabpanel">
-              <task-board-kanban></task-board-kanban>
-            </div>
-            <div class="tab-pane fade" id="pills-low" role="tabpanel">
-              <task-board-kanban></task-board-kanban>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
-    </div>
-  </div>
-  <!-- /Page Wrapper -->
+.kanban-column{
+min-width:320px;
+background:#f8f9fa;
+border-radius:12px;
+padding:16px;
+}
 
-  <tasks-modal></tasks-modal>
-</template>
+.kanban-header{
+font-weight:700;
+margin-bottom:15px;
+}
+
+.kanban-card{
+background:#fff;
+border-radius:10px;
+padding:14px;
+margin-bottom:14px;
+cursor:grab;
+box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+
+.kanban-card p{
+font-size:13px;
+margin-bottom:10px;
+}
+
+.badge{
+padding:6px 10px;
+}
+</style>
