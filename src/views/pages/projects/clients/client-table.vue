@@ -1,286 +1,241 @@
 <template>
-  <div id="primaryBorderFive" class="accordion-collapse collapse border-top" aria-labelledby="headingFive"
-    data-bs-parent="#accordionExample">
+  <div
+    id="primaryBorderFive"
+    class="accordion-collapse collapse border-top"
+    aria-labelledby="headingFive"
+    data-bs-parent="#accordionExample"
+  >
     <div class="accordion-body">
+
+      <!-- HEADER -->
       <div class="row align-items-center g-3 mb-3">
         <div class="col-sm-4">
-          <h6>Total No of Documents : 45</h6>
+          <h6>Total Documents : {{ documents.length }}</h6>
         </div>
+
         <div class="col-sm-8">
           <div class="d-flex align-items-center">
-            <div class="dropdown me-2">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white" data-bs-toggle="dropdown"
-                aria-expanded="false">
-                Sort By : Docs Type
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Docs</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Pdf</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Image</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Folder</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Xml</a>
-                </li>
-              </ul>
-            </div>
+
+            <!-- SEARCH -->
             <div class="position-relative input-icon flex-fill">
               <span class="input-icon-addon">
                 <i class="ti ti-search"></i>
               </span>
-              <input type="text" class="form-control" placeholder="Search" v-model="searchQuery" />
+
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Search documents..."
+                v-model="searchQuery"
+              />
             </div>
+
           </div>
         </div>
       </div>
-      <div class="custom-datatable-filter table-responsive no-datatable-length border">
-        <a-table class="table datatable thead-light" :columns="columns" :data-source="filteredPages"
-          :row-selection="rowSelection">
+
+      <!-- TABLE -->
+      <div class="custom-datatable-filter table-responsive border">
+
+        <div v-if="loading" class="text-center py-4">
+          <div class="spinner-border"></div>
+        </div>
+
+        <a-table
+          v-else
+          class="table datatable thead-light"
+          :columns="columns"
+          :data-source="filteredDocuments"
+          :row-selection="rowSelection"
+          :pagination="false"
+        >
+
           <template #bodyCell="{ column, record }">
-            <template v-if="column.key === 'Name'">
+
+            <!-- NAME -->
+            <template v-if="column.key === 'name'">
               <div class="d-flex align-items-center file-name-icon">
-                <a href="javascript:void(0);" class="avatar avatar-md bg-light" data-bs-toggle="offcanvas"
-                  data-bs-target="#preview">
-                  <img :src="getImageUrl(record.Image)" class="img-fluid" alt="img" /></a>
+
+                <a
+                  href="javascript:void(0);"
+                  class="avatar avatar-md bg-light"
+                >
+                  <img :src="getFileIcon(record.type)" class="img-fluid" />
+                </a>
+
                 <div class="ms-2">
                   <p class="text-title fw-medium mb-0">
-                    <a href="javascript:void(0);" data-bs-toggle="offcanvas" data-bs-target="#preview">{{ record.Name
-                    }}</a>
+                    {{ record.name }}
                   </p>
+                  <small class="text-muted">{{ record.type }}</small>
                 </div>
+
               </div>
             </template>
-            <template v-if="column.key === 'Modified'">
-              <p class="text-title mb-0">{{ record.Modified }}</p>
-              <span>{{ record.Time }}</span>
+
+            <!-- SIZE -->
+            <template v-if="column.key === 'size'">
+              <p class="mb-0">{{ record.size }}</p>
             </template>
-            <template v-if="column.key === 'Share'">
+
+            <!-- TYPE -->
+            <template v-if="column.key === 'type'">
+              <p class="mb-0">{{ record.type }}</p>
+            </template>
+
+            <!-- MODIFIED -->
+            <template v-if="column.key === 'updatedAt'">
+              <p class="mb-0">{{ formatDate(record.updatedAt) }}</p>
+            </template>
+
+            <!-- SHARED -->
+            <template v-if="column.key === 'shared'">
               <div class="avatar-list-stacked avatar-group-sm">
-                <span class="avatar avatar-rounded">
-                  <img class="border border-white" :src="getImageUrlOne(record.ImageOne)" alt="img" />
+                <span
+                  v-for="(user, i) in record.sharedWith?.slice(0, 3)"
+                  :key="i"
+                  class="avatar avatar-rounded"
+                >
+                  <img
+                    class="border border-white"
+                    :src="user.avatar"
+                    alt="img"
+                  />
                 </span>
-                <span class="avatar avatar-rounded">
-                  <img class="border border-white" :src="getImageUrlOne(record.ImageTwo)" alt="img" />
-                </span>
-                <span class="avatar avatar-rounded">
-                  <img class="border border-white" :src="getImageUrlOne(record.ImageThree)" alt="img" />
-                </span>
-                <span class="avatar avatar-rounded">
-                  <img class="border border-white" :src="getImageUrlOne(record.ImageFOur)" alt="img" />
-                </span>
-                <a class="avatar bg-primary avatar-rounded text-fixed-white" href="javascript:void(0);">
-                  +1
+
+                <a
+                  v-if="record.sharedWith?.length > 3"
+                  class="avatar bg-primary avatar-rounded text-fixed-white"
+                >
+                  +{{ record.sharedWith.length - 3 }}
                 </a>
               </div>
             </template>
+
+            <!-- ACTION -->
             <template v-if="column.key === 'action'">
               <div class="d-flex align-items-center">
+
                 <div class="rating-select me-2">
-                  <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                  <a href="javascript:void(0);">
+                    <i class="ti ti-star"></i>
+                  </a>
                 </div>
+
                 <div class="dropdown">
-                  <a href="javascript:void(0);" class="d-flex align-items-center justify-content-center"
-                    data-bs-toggle="dropdown" aria-expanded="false">
+                  <a
+                    href="javascript:void(0);"
+                    data-bs-toggle="dropdown"
+                  >
                     <i class="ti ti-dots fs-14"></i>
                   </a>
-                  <ul class="dropdown-menu dropdown-menu-right p-3">
+
+                  <ul class="dropdown-menu dropdown-menu-end p-3">
                     <li>
-                      <a class="dropdown-item rounded-1" href="javascript:void(0);">
-                        <i class="ti ti-trash me-2"></i>Permanent Delete
+                      <a class="dropdown-item" href="javascript:void(0);">
+                        <i class="ti ti-trash me-2"></i>Delete
                       </a>
                     </li>
                     <li>
-                      <a class="dropdown-item rounded-1" href="javascript:void(0);">
-                        <i class="ti ti-edit-circle me-2"></i>Restore File
+                      <a class="dropdown-item" href="javascript:void(0);">
+                        <i class="ti ti-download me-2"></i>Download
                       </a>
                     </li>
                   </ul>
-                </div>
-              </div>
+                </li>
+              </ul>
             </template>
+
           </template>
+
         </a-table>
+
       </div>
     </div>
   </div>
 </template>
+
 <script>
+import api from "@/services/api";
+
 const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Name",
-    dataIndex: "Name",
-    key: "Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Name.toLowerCase();
-        b = b.Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Size",
-    dataIndex: "Size",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Size.toLowerCase();
-        b = b.Size.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Type",
-    dataIndex: "Type",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Type.toLowerCase();
-        b = b.Type.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Modified",
-    dataIndex: "Modified",
-    key: "Modified",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Modified.toLowerCase();
-        b = b.Modified.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Share",
-    dataIndex: "Share",
-    key: "Share",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Share.toLowerCase();
-        b = b.Share.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: false,
-  },
+  { title: "Name", dataIndex: "name", key: "name" },
+  { title: "Size", dataIndex: "size", key: "size" },
+  { title: "Type", dataIndex: "type", key: "type" },
+  { title: "Modified", dataIndex: "updatedAt", key: "updatedAt" },
+  { title: "Shared", dataIndex: "shared", key: "shared" },
+  { title: "", key: "action" },
 ];
-const data = [
-  {
-    key: "1",
-    Name: "Secret",
-    Size: "7.6 MB",
-    Type: "Doc",
-    Modified: "Mar 15, 2025",
-    Time: "05:00:14 PM",
-    Image: "file-01.svg",
-    ImageOne: "avatar-27.jpg",
-    ImageTwo: "avatar-29.jpg",
-    ImageThree: "avatar-12.jpg",
-    ImageFOur: "avatar-06.jpg",
-  },
-  {
-    key: "2",
-    Name: "Sophie Headrick",
-    Size: "7.4 MB",
-    Type: "PDF",
-    Modified: "Jan 8, 2025",
-    Time: "08:20:13 PM",
-    Image: "file-02.svg",
-    ImageOne: "avatar-15.jpg",
-    ImageTwo: "avatar-16.jpg",
-    ImageThree: "avatar-05.jpg",
-    ImageFOur: "avatar-06.jpg",
-  },
-  {
-    key: "3",
-    Name: "Gallery",
-    Size: "6.1 MB",
-    Type: "Image",
-    Modified: "Aug 6, 2025",
-    Time: "04:10:12 PM",
-    Image: "file-03.svg",
-    ImageOne: "avatar-02.jpg",
-    ImageTwo: "avatar-03.jpg",
-    ImageThree: "avatar-05.jpg",
-    ImageFOur: "avatar-06.jpg",
-  },
-  {
-    key: "4",
-    Name: "Doris Crowley",
-    Size: "5.2 MB",
-    Type: "Folder",
-    Modified: "Jan 6, 2025",
-    Time: "03:40:14 PM",
-    Image: "file-04.svg",
-    ImageOne: "avatar-06.jpg",
-    ImageTwo: "avatar-10.jpg",
-    ImageThree: "avatar-15.jpg",
-    ImageFOur: "avatar-06.jpg",
-  },
-  {
-    key: "5",
-    Name: "Cheat_codez",
-    Size: "8 MB",
-    Type: "Xml",
-    Modified: "Oct 12, 2025",
-    Time: "05:00:14 PM",
-    Image: "file-05.svg",
-    ImageOne: "avatar-28.jpg",
-    ImageTwo: "avatar-14.jpg",
-    ImageThree: "avatar-15.jpg",
-    ImageFOur: "avatar-06.jpg",
-  },
-];
+
 const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
+  onChange: () => {},
+  onSelect: () => {},
+  onSelectAll: () => {},
 };
+
 export default {
   data() {
     return {
-      data,
+      loading: false,
+      documents: [],
+      searchQuery: "",
       columns,
       rowSelection,
-      searchQuery: '',
     };
   },
-  methods: {
-    getImageUrl(imageName) {
-      return new URL(`/src/assets/img/icons/${imageName}`, import.meta.url).href;
-    },
-    getImageUrlOne(imageNameOne) {
-      return new URL(`/src/assets/img/profiles/${imageNameOne}`, import.meta.url).href;
-    }
+
+  mounted() {
+    this.fetchDocuments();
   },
+
   computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
+    filteredDocuments() {
+      const q = this.searchQuery.toLowerCase();
+
+      return this.documents.filter((d) => {
         return (
-          record.Name.toLowerCase().includes(query) ||
-          record.Size.toLowerCase().includes(query) ||
-          record.Type.toLowerCase().includes(query) ||
-          record.Modified.toLowerCase().includes(query) ||
-          record.Time.toLowerCase().includes(query)
+          d.name?.toLowerCase().includes(q) ||
+          d.type?.toLowerCase().includes(q) ||
+          d.size?.toLowerCase().includes(q)
         );
       });
+    },
+  },
+
+  methods: {
+    async fetchDocuments() {
+      this.loading = true;
+
+      try {
+        // 🔥 Adjust endpoint to your backend:
+        // /clients/:id/documents OR /projects/:id/documents
+        const { data } = await api.get("/clients/documents");
+
+        this.documents = data?.data || data || [];
+      } catch (err) {
+        console.error("Failed to fetch documents:", err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    getFileIcon(type) {
+      const map = {
+        pdf: "file-pdf.svg",
+        doc: "file-doc.svg",
+        image: "file-image.svg",
+        folder: "file-folder.svg",
+        xml: "file-xml.svg",
+      };
+
+      const file = map[type?.toLowerCase()] || "file-default.svg";
+
+      return new URL(`/src/assets/img/icons/${file}`, import.meta.url).href;
+    },
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
     },
   },
 };
