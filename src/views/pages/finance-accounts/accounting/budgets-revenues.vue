@@ -1,336 +1,296 @@
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
-  <!-- Page Wrapper -->
+  <layout-header />
+  <layout-sidebar />
+
   <div class="page-wrapper">
     <div class="content">
-      <!-- Breadcrumb -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_new_expense"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Revenue</a>
-          </div>
-          <div class="ms-2 head-icons">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
-        </div>
-      </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Budgets list -->
-      <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Budget Revenue List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="dropdown">
-              <a href="javascript:void(0);"
-                class="dropdown-toggle btn btn-sm btn-white d-inline-flex align-items-center" data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div class="card-body p-0">
-          <div class="row">
-            <div class="col-sm-12 col-md-6">
-              <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-                  <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                    class="form-select form-select-sm">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select> Entries</label></div>
-            </div>
-            <div class="col-sm-12 col-md-6">
-              <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery"
-                    type="search" class="form-control form-control-sm" placeholder="Search"
-                    aria-controls="DataTables_Table_0"></label>
-              </div>
-            </div>
-          </div>
-          <div class="custom-datatable-filter table-responsive">
-            <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-              :row-selection="rowSelection">
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'RevenueName'">
-                  <h6 class="fw-medium">
-                    <a href="javascript:void(0);">{{ record.RevenueName }}</a>
-                  </h6>
-                </template>
-                <template v-if="column.key === 'action'">
-                  <div class="action-icon d-inline-flex">
-                    <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal"
-                      data-bs-target="#edit_new_expense"><i class="ti ti-edit"></i></a>
-                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                        class="ti ti-trash"></i></a>
-                  </div>
-                </template>
-              </template>
-            </a-table>
-          </div>
-          <div class="row pagination">
-            <div class="col-sm-12 col-md-5">
-              <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                Showing {{
-                  (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-                  filteredPages.length) }} of {{
-                  filteredPages.length }}
-                entries</div>
-            </div>
-            <div class="col-sm-12 col-md-7">
-              <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-                <ul class="pagination">
-                  <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-                    id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true"
-                      role="link" data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-                    </a></li>
-                  <li class="paginate_button page-item" :class="{ active: page === currentPage }"
-                    v-for="page in totalPages" :key="page">
-                    <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                      role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-                  </li>
-                  <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-                    id="DataTables_Table_0_next">
-                    <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next"
-                      tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage < totalPages ? currentPage++ : null"><i
-                        class="ti ti-chevron-right"></i></a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Budget Revenues</h4>
+
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#createRevenueModal"
+        >
+          <i class="ti ti-plus me-1"></i> Add Revenue
+        </button>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="card mb-3">
+        <div class="card-body d-flex gap-2 flex-wrap">
+          <input
+            v-model="filters.search"
+            class="form-control"
+            placeholder="Search budgets..."
+            @input="fetchBudgets"
+          />
+
+          <select v-model="filters.status" class="form-select" @change="fetchBudgets">
+            <option value="">All Status</option>
+            <option value="DRAFT">Draft</option>
+            <option value="CLOSED">Closed</option>
+          </select>
+
+          <input
+            type="date"
+            v-model="filters.startDate"
+            class="form-control"
+            @change="fetchBudgets"
+          />
+
+          <input
+            type="date"
+            v-model="filters.endDate"
+            class="form-control"
+            @change="fetchBudgets"
+          />
         </div>
       </div>
-      <!-- /Budgets list -->
-    </div>
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
+
+      <!-- TABLE -->
+      <div class="card">
+        <div class="card-body p-0">
+
+          <div v-if="loading" class="text-center p-4">
+            <div class="spinner-border"></div>
+          </div>
+
+          <div v-else class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Budget</th>
+                  <th>Status</th>
+                  <th>Total Revenue</th>
+                  <th>Total Expense</th>
+                  <th>Profit</th>
+                  <th>Utilization %</th>
+                  <th>Created</th>
+                  <th></th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-for="b in budgets" :key="b.id">
+                  <td>{{ b.title }}</td>
+                  <td>
+                    <span class="badge bg-info">{{ b.status }}</span>
+                  </td>
+                  <td>{{ formatCurrency(b.totalRevenue) }}</td>
+                  <td>{{ formatCurrency(b.totalExpense) }}</td>
+                  <td :class="b.profit >= 0 ? 'text-success' : 'text-danger'">
+                    {{ formatCurrency(b.profit) }}
+                  </td>
+                  <td>{{ b.utilization.toFixed(2) }}%</td>
+                  <td>{{ formatDate(b.createdAt) }}</td>
+
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-light me-1" @click="openRevenueModal(b)">
+                      + Revenue
+                    </button>
+
+                    <button
+                      class="btn btn-sm btn-danger"
+                      @click="deleteBudget(b.id)"
+                    >
+                      <i class="ti ti-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+
+                <tr v-if="!budgets.length">
+                  <td colspan="8" class="text-center p-3">No data</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
-  <!-- /Page Wrapper -->
-  <budgets-revenues-modal></budgets-revenues-modal>
+
+  <!-- CREATE REVENUE MODAL -->
+  <div class="modal fade" id="createRevenueModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+        <div class="modal-header">
+          <h5>Add Revenue</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-2">
+            <label>Budget</label>
+            <select v-model="form.budgetId" class="form-select">
+              <option v-for="b in budgets" :key="b.id" :value="b.id">
+                {{ b.title }}
+              </option>
+            </select>
+          </div>
+
+          <div class="mb-2">
+            <label>Name</label>
+            <input v-model="form.name" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label>Amount</label>
+            <input v-model="form.amount" type="number" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label>Date</label>
+            <input v-model="form.revenueDate" type="date" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label>Cash Account ID</label>
+            <input v-model="form.cashAccountId" class="form-control" />
+          </div>
+
+          <div class="mb-2">
+            <label>Revenue Account ID</label>
+            <input v-model="form.revenueAccountId" class="form-control" />
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary" @click="createRevenue">
+            Save
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </template>
+
 <script>
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Revenue Name",
-    dataIndex: "RevenueName",
-    key: "RevenueName",
-    sorter: {
-      compare: (a, b) => {
-        a = a.RevenueName.toLowerCase();
-        b = b.RevenueName.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Category Name",
-    dataIndex: "CategoryName",
-    sorter: {
-      compare: (a, b) => {
-        a = a.CategoryName.toLowerCase();
-        b = b.CategoryName.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Sub Category Name",
-    dataIndex: "SubCategoryName",
-    sorter: {
-      compare: (a, b) => {
-        a = a.SubCategoryName.toLowerCase();
-        b = b.SubCategoryName.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Amount",
-    dataIndex: "Amount",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Amount.toLowerCase();
-        b = b.Amount.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Expense Date",
-    dataIndex: "ExpenseDate",
-    sorter: {
-      compare: (a, b) => {
-        a = a.ExpenseDate.toLowerCase();
-        b = b.ExpenseDate.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-const data = [
-  {
-    key: "1",
-    RevenueName: "Training Programs",
-    CategoryName: "Training",
-    SubCategoryName: "Employee Training",
-    Amount: "20000",
-    ExpenseDate: "14 Jan 2024",
-  },
-  {
-    key: "2",
-    RevenueName: "Premium Support Packages",
-    CategoryName: "Support & Maintenance",
-    SubCategoryName: "Premium Support",
-    Amount: "40000",
-    ExpenseDate: "21 Jan 2024",
-  },
-  {
-    key: "3",
-    RevenueName: "Consulting Services",
-    CategoryName: "Services",
-    SubCategoryName: "Consulting",
-    Amount: "10000",
-    ExpenseDate: "10 Feb 2024",
-  },
-  {
-    key: "4",
-    RevenueName: "Subscription Fees",
-    CategoryName: "Platform Fees",
-    SubCategoryName: "Subscription Plans",
-    Amount: "20000",
-    ExpenseDate: "18 Feb 2024",
-  },
-];
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
-import moment from "moment";
-import DateRangePicker from "daterangepicker";
+import api from "@/services/api";
+
 export default {
   data() {
     return {
-      title: "Budgets Revenue",
-      text: "Accounting",
-      text1: "Budgets Revenue",
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
-      currentPage: 1,
-      pageSize: 10,
+      loading: false,
+
+      budgets: [],
+
+      filters: {
+        search: "",
+        status: "",
+        startDate: "",
+        endDate: "",
+      },
+
+      form: {
+        budgetId: "",
+        name: "",
+        amount: "",
+        revenueDate: "",
+        cashAccountId: "",
+        revenueAccountId: "",
+      },
     };
   },
-  computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.RevenueName.toLowerCase().includes(query) ||
-          record.CategoryName.toLowerCase().includes(query) ||
-          record.SubCategoryName.toLowerCase().includes(query) ||
-          record.Amount.toLowerCase().includes(query) ||
-          record.ExpenseDate.toLowerCase().includes(query)
-        );
-      });
-    },
-    paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
-    },
-    totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
-    },
+
+  mounted() {
+    this.fetchBudgets();
   },
-  setup() {
-    const dateRangeInput = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
-
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
-
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
-
-        booking_range(start, end);
-      }
-    });
-
-    return {
-      dateRangeInput,
-    };
-  },
   methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+    /**
+     * ===============================
+     * FETCH BUDGETS (ERP)
+     * ===============================
+     */
+    async fetchBudgets() {
+      this.loading = true;
+
+      try {
+        const { data } = await api.get("/budgets", {
+          params: this.filters,
+        });
+
+        this.budgets = data.data;
+      } catch (err) {
+        console.error(err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * ===============================
+     * CREATE REVENUE
+     * ===============================
+     */
+    async createRevenue() {
+      try {
+        await api.post("/revenues", this.form);
+
+        this.$toast?.success("Revenue added");
+
+        this.fetchBudgets();
+
+        // reset
+        this.form = {
+          budgetId: "",
+          name: "",
+          amount: "",
+          revenueDate: "",
+          cashAccountId: "",
+          revenueAccountId: "",
+        };
+
+        document.getElementById("createRevenueModal")?.classList.remove("show");
+      } catch (err) {
+        this.$toast?.error(err.response?.data?.message || "Error");
+      }
+    },
+
+    /**
+     * ===============================
+     * DELETE BUDGET
+     * ===============================
+     */
+    async deleteBudget(id) {
+      if (!confirm("Delete this budget?")) return;
+
+      try {
+        await api.delete(`/budgets/${id}`);
+
+        this.$toast?.success("Deleted");
+
+        this.fetchBudgets();
+      } catch (err) {
+        this.$toast?.error("Delete failed");
+      }
+    },
+
+    /**
+     * ===============================
+     * HELPERS
+     * ===============================
+     */
+    formatCurrency(val) {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(val || 0);
+    },
+
+    formatDate(date) {
+      return new Date(date).toLocaleDateString();
+    },
+
+    openRevenueModal(budget) {
+      this.form.budgetId = budget.id;
     },
   },
 };
