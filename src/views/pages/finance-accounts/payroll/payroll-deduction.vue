@@ -1,279 +1,253 @@
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
-  <!-- Page Wrapper -->
+  <layout-header />
+  <layout-sidebar />
+
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
+
+        <div class="d-flex right-content align-items-center flex-wrap">
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_deduction">
+            <i class="ti ti-circle-plus me-1"></i>
+            Add Deduction
+          </button>
         </div>
       </div>
-      <div class="d-flex justify-content-between my-4">
+
+      <!-- Tabs -->
+      <div class="d-flex justify-content-between my-3">
         <div class="payroll-btns">
-          <router-link to="/payroll/payroll-additions" class="btn btn-white border me-2">Additions</router-link>
-          <router-link to="/payroll/payroll-overtime" class="btn btn-white border me-2">Overtime</router-link>
-          <router-link to="/payroll/payroll-deduction" class="btn btn-white active border">Deductions</router-link>
-        </div>
-        <div class="mb-2">
-          <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_deduction"
-            class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Deduction</a>
+          <router-link to="/payroll/payroll-additions" class="btn btn-white border me-2">
+            Additions
+          </router-link>
+          <router-link to="/payroll/payroll-overtime" class="btn btn-white border me-2">
+            Overtime
+          </router-link>
+          <router-link to="/payroll/payroll-deduction" class="btn btn-primary">
+            Deductions
+          </router-link>
         </div>
       </div>
 
-      <!-- /Breadcrumb -->
-
-      <!-- Policy list -->
+      <!-- Table Card -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Deductions List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Category
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Monthly Remuneration</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Additional Remuneration</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Monthly Remuneration</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
-          </div>
+        <div class="card-header d-flex justify-content-between flex-wrap">
+          <h5>Deductions</h5>
+
+          <input
+            v-model="searchQuery"
+            class="form-control w-auto"
+            placeholder="Search deductions..."
+          />
         </div>
+
         <div class="card-body p-0">
-          <div class="row">
-            <div class="col-sm-12 col-md-6">
-              <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-                  <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-                    class="form-select form-select-sm">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select> Entries</label></div>
-            </div>
-            <div class="col-sm-12 col-md-6">
-              <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery"
-                    type="search" class="form-control form-control-sm" placeholder="Search"
-                    aria-controls="DataTables_Table_0"></label>
-              </div>
-            </div>
+
+          <div v-if="loading" class="p-4 text-center">
+            <div class="spinner-border text-primary"></div>
           </div>
-          <div class="custom-datatable-filter table-responsive">
-            <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-              :row-selection="rowSelection">
-              <template #bodyCell="{ column, record }">
-                <template v-if="column.key === 'Name'">
-                  <h6 class="fs-14 fw-medium text-gray-9">{{ record.Name }}</h6>
-                </template>
-                <template v-if="column.key === 'action'">
-                  <div class="action-icon d-inline-flex">
-                    <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal"
-                      data-bs-target="#edit_deduction"><i class="ti ti-edit"></i></a>
-                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                        class="ti ti-trash"></i></a>
-                  </div>
-                </template>
+
+          <a-table
+            v-else
+            :columns="columns"
+            :data-source="paginatedData"
+            row-key="id"
+            :pagination="false"
+          >
+
+            <template #bodyCell="{ column, record }">
+
+              <!-- Name -->
+              <template v-if="column.key === 'name'">
+                <strong>{{ record.name }}</strong>
               </template>
-            </a-table>
-          </div>
-          <div class="row pagination">
-            <div class="col-sm-12 col-md-5">
-              <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-                Showing {{
-                  (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-                  filteredPages.length) }} of {{
-                  filteredPages.length }}
-                entries</div>
+
+              <!-- Amount -->
+              <template v-if="column.key === 'amount'">
+                ₦{{ formatMoney(record.unitAmount) }}
+              </template>
+
+              <!-- Action -->
+              <template v-if="column.key === 'action'">
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-light" @click="openEdit(record)">
+                    Edit
+                  </button>
+
+                  <button class="btn btn-sm btn-danger" @click="removeItem(record.id)">
+                    Delete
+                  </button>
+                </div>
+              </template>
+
+            </template>
+          </a-table>
+
+          <!-- Pagination -->
+          <div class="p-3 d-flex justify-content-between">
+            <div>
+              Showing {{ startIndex + 1 }} - {{ endIndex }} of {{ filtered.length }}
             </div>
-            <div class="col-sm-12 col-md-7">
-              <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-                <ul class="pagination">
-                  <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-                    id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true"
-                      role="link" data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-                    </a></li>
-                  <li class="paginate_button page-item" :class="{ active: page === currentPage }"
-                    v-for="page in totalPages" :key="page">
-                    <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                      role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-                  </li>
-                  <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-                    id="DataTables_Table_0_next">
-                    <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next"
-                      tabindex="-1" class="page-link" href="javascript:void(0);"
-                      @click.prevent="currentPage < totalPages ? currentPage++ : null"><i
-                        class="ti ti-chevron-right"></i></a>
-                  </li>
-                </ul>
-              </div>
+
+            <div>
+              <button class="btn btn-sm btn-light" :disabled="page === 1" @click="page--">
+                Prev
+              </button>
+
+              <button class="btn btn-sm btn-light ms-2"
+                      :disabled="page >= totalPages"
+                      @click="page++">
+                Next
+              </button>
             </div>
           </div>
+
         </div>
       </div>
-      <!-- /Policylist list -->
+
     </div>
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
+    <div class="footer p-3 border-top bg-white">
+      <small>© {{ new Date().getFullYear() }} SmartHR Payroll System</small>
     </div>
   </div>
-  <!-- /Page Wrapper -->
-  <payroll-deduction-modal></payroll-deduction-modal>
+
+  <!-- Add Modal -->
+  <div class="modal fade" id="add_deduction">
+    <div class="modal-dialog">
+      <div class="modal-content p-3">
+
+        <h5>Add Deduction</h5>
+
+        <input v-model="form.name" class="form-control my-2" placeholder="Name" />
+        <input v-model.number="form.unitAmount" class="form-control my-2" placeholder="Amount" />
+
+        <button class="btn btn-primary w-100" @click="createDeduction">
+          Save
+        </button>
+
+      </div>
+    </div>
+  </div>
+
 </template>
+
 <script>
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Name",
-    dataIndex: "Name",
-    key: "Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Name.toLowerCase();
-        b = b.Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Default/Unit Amount",
-    dataIndex: "UnitAmount",
-    sorter: {
-      compare: (a, b) => {
-        a = a.UnitAmount.toLowerCase();
-        b = b.UnitAmount.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-const data = [
-  {
-    key: "1",
-    Name: "Absent amount",
-    UnitAmount: "$12",
-  },
-  {
-    key: "2",
-    Name: "Advance",
-    UnitAmount: "$7",
-  },
-  {
-    key: "3",
-    Name: "Unpaid leave",
-    UnitAmount: "$3",
-  },
-];
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
+import api from "@/services/api";
+
 export default {
   data() {
     return {
       title: "Payroll Items",
       text: "Payroll",
-      text1: "Payroll Items",
-      data,
-      columns,
-      rowSelection,
-      currentPage: 1,
-      pageSize: 10,
+      text1: "Deductions",
+
+      items: [],
+      loading: false,
+
       searchQuery: "",
+      page: 1,
+      pageSize: 10,
+
+      form: {
+        name: "",
+        unitAmount: 0,
+        type: "DEDUCTION",
+      },
+
+      columns: [
+        { title: "Name", dataIndex: "name", key: "name" },
+        { title: "Amount", dataIndex: "unitAmount", key: "amount" },
+        { title: "Action", key: "action" },
+      ],
     };
   },
+
   computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
-        return (
-          record.Name.toLowerCase().includes(query) ||
-          record.UnitAmount.toLowerCase().includes(query)
-        );
-      });
+    filtered() {
+      const q = this.searchQuery.toLowerCase();
+
+      return this.items.filter((i) =>
+        (i.name || "").toLowerCase().includes(q)
+      );
     },
+
     paginatedData() {
-      const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+      const start = (this.page - 1) * this.pageSize;
+      return this.filtered.slice(start, start + this.pageSize);
     },
+
     totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+      return Math.ceil(this.filtered.length / this.pageSize) || 1;
+    },
+
+    startIndex() {
+      return (this.page - 1) * this.pageSize;
+    },
+
+    endIndex() {
+      return Math.min(this.page * this.pageSize, this.filtered.length);
     },
   },
+
+  watch: {
+    searchQuery() {
+      this.page = 1;
+    },
+  },
+
+  mounted() {
+    this.fetchDeductions();
+  },
+
   methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+    async fetchDeductions() {
+      this.loading = true;
+
+      try {
+        const res = await api.get("/payroll/items", {
+          params: { type: "DEDUCTION" },
+        });
+
+        this.items = res.data?.data || [];
+      } catch (err) {
+        console.error("Failed to load deductions", err);
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async createDeduction() {
+      try {
+        await api.post("/payroll/items", this.form);
+
+        this.form.name = "";
+        this.form.unitAmount = 0;
+
+        await this.fetchDeductions();
+      } catch (err) {
+        console.error("Create failed", err);
+      }
+    },
+
+    openEdit(record) {
+      this.form = { ...record };
+    },
+
+    async removeItem(id) {
+      try {
+        await api.delete(`/payroll/items/${id}`);
+        await this.fetchDeductions();
+      } catch (err) {
+        console.error("Delete failed", err);
+      }
+    },
+
+    formatMoney(val) {
+      return Number(val || 0).toLocaleString();
     },
   },
 };
