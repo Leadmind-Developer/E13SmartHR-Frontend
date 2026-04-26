@@ -1,197 +1,256 @@
 <script>
-const data = [
-  {
-    "key": "1",
-    "Category_Name": "Technology",
-    "Sub_Category_Name": "Hardware Cost"
-  },
-  {
-    "key": "2",
-    "Category_Name": "Taxes",
-    "Sub_Category_Name": "Payroll Taxes"
-  },
-  {
-    "key": "3",
-    "Category_Name": "Recruitment",
-    "Sub_Category_Name": "Advertisement"
-  },
-  {
-    "key": "4",
-    "Category_Name": "Compensation",
-    "Sub_Category_Name": "Incentive"
-  },
-  {
-    "key": "5",
-    "Category_Name": "Travel",
-    "Sub_Category_Name": "Business Travel"
-  },
-  {
-    "key": "6",
-    "Category_Name": "Internship",
-    "Sub_Category_Name": "Stipends"
-  },
-  {
-    "key": "7",
-    "Category_Name": "Employee Engagement",
-    "Sub_Category_Name": "Engagement Activities"
-  },
-  {
-    "key": "8",
-    "Category_Name": "Employee Benefits",
-    "Sub_Category_Name": "Healthcare Benefits"
-  },
-  {
-    "key": "9",
-    "Category_Name": "Corporate Events",
-    "Sub_Category_Name": "Decorations"
-  },
-  {
-    "key": "10",
-    "Category_Name": "Compliance",
-    "Sub_Category_Name": "Performance Appraisal"
-  }
-]
-
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Category Name",
-    dataIndex: "Category_Name",
-    key: "Category_Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Category_Name.toLowerCase();
-        b = b.Category_Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Sub Category Name",
-    dataIndex: "Sub_Category_Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Sub_Category_Name.toLowerCase();
-        b = b.Sub_Category_Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true
-  },
-]
-
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
+import api from "@/services/api";
 
 export default {
+  name: "CategoriesTable",
+
   data() {
     return {
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
+      categories: [],
+      loading: false,
+      error: null,
+
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
-    }
+      total: 0,
+
+      selectedRowKeys: [],
+    };
   },
+
   computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
+    filteredCategories() {
+      if (!this.searchQuery) return this.categories;
+
+      const q = this.searchQuery.toLowerCase();
+
+      return this.categories.filter((item) => {
         return (
-          record.Category_Name.toLowerCase().includes(query) ||
-          record.Sub_Category_Name.toLowerCase().includes(query)
+          item.name?.toLowerCase().includes(q) ||
+          item.SubCategories?.some((sub) =>
+            sub.name?.toLowerCase().includes(q)
+          )
         );
       });
     },
-    paginatedData() {
+
+    paginatedCategories() {
       const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+      return this.filteredCategories.slice(start, start + this.pageSize);
     },
+
     totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+      return Math.ceil(this.filteredCategories.length / this.pageSize) || 1;
     },
   },
-}
+
+  watch: {
+    pageSize() {
+      this.currentPage = 1;
+    },
+  },
+
+  mounted() {
+    this.fetchCategories();
+  },
+
+  methods: {
+    /**
+     * ===============================
+     * FETCH CATEGORIES (ERP READY)
+     * ===============================
+     */
+    async fetchCategories() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const { data } = await api.get("/category");
+
+        // expected backend: { success, data: [] }
+        this.categories = data?.data || [];
+        this.total = this.categories.length;
+      } catch (err) {
+        this.error =
+          err?.response?.data?.message || "Failed to load categories";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * ===============================
+     * DELETE CATEGORY
+     * ===============================
+     */
+    async deleteCategory(id) {
+      try {
+        await api.delete(`/category/${id}`);
+
+        this.categories = this.categories.filter((c) => c.id !== id);
+      } catch (err) {
+        console.error(err);
+        alert(err?.response?.data?.message || "Delete failed");
+      }
+    },
+
+    /**
+     * ===============================
+     * UI HELPERS
+     * ===============================
+     */
+    changePage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    },
+
+    handleSelect(keys) {
+      this.selectedRowKeys = keys;
+    },
+  },
+};
 </script>
 
 <template>
   <div class="card-body p-0">
-    <div class="row">
-      <div class="col-sm-12 col-md-6">
-        <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-            <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-              class="form-select form-select-sm">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select> Entries</label></div>
+
+    <!-- ================= LOADING ================= -->
+    <div v-if="loading" class="p-4 text-center">
+      <div class="spinner-border"></div>
+    </div>
+
+    <!-- ================= ERROR ================= -->
+    <div v-if="error" class="alert alert-danger m-3">
+      {{ error }}
+    </div>
+
+    <!-- ================= HEADER CONTROLS ================= -->
+    <div class="row p-3">
+      <div class="col-md-6">
+        <label>
+          Rows per page
+          <select v-model="pageSize" class="form-select form-select-sm">
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </label>
       </div>
-      <div class="col-sm-12 col-md-6">
-        <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery" type="search"
-              class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0"></label>
-        </div>
+
+      <div class="col-md-6 text-end">
+        <input
+          v-model="searchQuery"
+          class="form-control form-control-sm"
+          placeholder="Search categories or subcategories..."
+        />
       </div>
     </div>
-    <div class="custom-datatable-filter table-responsive">
-      <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-        :row-selection="rowSelection">
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'Category_Name'">
-            <h6 class="fw-medium">{{ record.Category_Name }}</h6>
-          </template>
-          <template v-if="column.key === 'action'">
-            <div class="action-icon d-inline-flex">
-              <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_category"><i
-                  class="ti ti-edit"></i></a>
-              <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                  class="ti ti-trash"></i></a>
-            </div>
-          </template>
-        </template>
-      </a-table>
+
+    <!-- ================= TABLE ================= -->
+    <div class="table-responsive">
+      <table class="table table-hover">
+
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Sub Categories</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr v-for="cat in paginatedCategories" :key="cat.id">
+
+            <!-- CATEGORY -->
+            <td>
+              <strong>{{ cat.name }}</strong>
+            </td>
+
+            <!-- SUB CATEGORIES -->
+            <td>
+              <span
+                v-for="sub in cat.SubCategories"
+                :key="sub.id"
+                class="badge bg-light text-dark me-1"
+              >
+                {{ sub.name }}
+              </span>
+            </td>
+
+            <!-- ACTIONS -->
+            <td class="text-end">
+
+              <button class="btn btn-sm btn-outline-primary me-2">
+                Edit
+              </button>
+
+              <button
+                class="btn btn-sm btn-outline-danger"
+                @click="deleteCategory(cat.id)"
+              >
+                Delete
+              </button>
+
+            </td>
+
+          </tr>
+
+          <tr v-if="!loading && paginatedCategories.length === 0">
+            <td colspan="3" class="text-center text-muted py-4">
+              No categories found
+            </td>
+          </tr>
+        </tbody>
+
+      </table>
     </div>
-    <div class="row pagination">
-      <div class="col-sm-12 col-md-5">
-        <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-          Showing {{
-            (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-            filteredPages.length) }} of {{
-            filteredPages.length }}
-          entries</div>
+
+    <!-- ================= PAGINATION ================= -->
+    <div class="d-flex justify-content-between align-items-center p-3">
+
+      <div class="text-muted">
+        Showing
+        {{ (currentPage - 1) * pageSize + 1 }}
+        -
+        {{ Math.min(currentPage * pageSize, filteredCategories.length) }}
+        of
+        {{ filteredCategories.length }}
       </div>
-      <div class="col-sm-12 col-md-7">
-        <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-          <ul class="pagination">
-            <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-              id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-              </a></li>
-            <li class="paginate_button page-item" :class="{ active: page === currentPage }" v-for="page in totalPages"
-              :key="page">
-              <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-            </li>
-            <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-              id="DataTables_Table_0_next">
-              <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next" tabindex="-1"
-                class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage < totalPages ? currentPage++ : null"><i class="ti ti-chevron-right"></i></a>
-            </li>
-          </ul>
-        </div>
-      </div>
+
+      <ul class="pagination mb-0">
+
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a class="page-link" @click.prevent="changePage(currentPage - 1)">
+            Prev
+          </a>
+        </li>
+
+        <li
+          v-for="page in totalPages"
+          :key="page"
+          class="page-item"
+          :class="{ active: page === currentPage }"
+        >
+          <a class="page-link" @click.prevent="changePage(page)">
+            {{ page }}
+          </a>
+        </li>
+
+        <li
+          class="page-item"
+          :class="{ disabled: currentPage === totalPages }"
+        >
+          <a class="page-link" @click.prevent="changePage(currentPage + 1)">
+            Next
+          </a>
+        </li>
+
+      </ul>
+
     </div>
+
   </div>
 </template>
