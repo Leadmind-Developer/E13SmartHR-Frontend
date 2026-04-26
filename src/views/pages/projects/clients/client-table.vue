@@ -15,13 +15,10 @@
 
         <div class="col-sm-8">
           <div class="d-flex align-items-center">
-
-            <!-- SEARCH -->
             <div class="position-relative input-icon flex-fill">
               <span class="input-icon-addon">
                 <i class="ti ti-search"></i>
               </span>
-
               <input
                 type="text"
                 class="form-control"
@@ -29,7 +26,6 @@
                 v-model="searchQuery"
               />
             </div>
-
           </div>
         </div>
       </div>
@@ -37,10 +33,12 @@
       <!-- TABLE -->
       <div class="custom-datatable-filter table-responsive border">
 
+        <!-- LOADING -->
         <div v-if="loading" class="text-center py-4">
           <div class="spinner-border"></div>
         </div>
 
+        <!-- TABLE -->
         <a-table
           v-else
           class="table datatable thead-light"
@@ -49,19 +47,14 @@
           :row-selection="rowSelection"
           :pagination="false"
         >
-
           <template #bodyCell="{ column, record }">
 
             <!-- NAME -->
             <template v-if="column.key === 'name'">
               <div class="d-flex align-items-center file-name-icon">
-
-                <a
-                  href="javascript:void(0);"
-                  class="avatar avatar-md bg-light"
-                >
+                <div class="avatar avatar-md bg-light">
                   <img :src="getFileIcon(record.type)" class="img-fluid" />
-                </a>
+                </div>
 
                 <div class="ms-2">
                   <p class="text-title fw-medium mb-0">
@@ -69,7 +62,6 @@
                   </p>
                   <small class="text-muted">{{ record.type }}</small>
                 </div>
-
               </div>
             </template>
 
@@ -92,7 +84,7 @@
             <template v-if="column.key === 'shared'">
               <div class="avatar-list-stacked avatar-group-sm">
                 <span
-                  v-for="(user, i) in record.sharedWith?.slice(0, 3)"
+                  v-for="(user, i) in (record.sharedWith || []).slice(0, 3)"
                   :key="i"
                   class="avatar avatar-rounded"
                 >
@@ -103,12 +95,12 @@
                   />
                 </span>
 
-                <a
-                  v-if="record.sharedWith?.length > 3"
+                <span
+                  v-if="record.sharedWith && record.sharedWith.length > 3"
                   class="avatar bg-primary avatar-rounded text-fixed-white"
                 >
                   +{{ record.sharedWith.length - 3 }}
-                </a>
+                </span>
               </div>
             </template>
 
@@ -123,10 +115,7 @@
                 </div>
 
                 <div class="dropdown">
-                  <a
-                    href="javascript:void(0);"
-                    data-bs-toggle="dropdown"
-                  >
+                  <a href="javascript:void(0);" data-bs-toggle="dropdown">
                     <i class="ti ti-dots fs-14"></i>
                   </a>
 
@@ -142,12 +131,12 @@
                       </a>
                     </li>
                   </ul>
-                </li>
-              </ul>
+                </div>
+
+              </div>
             </template>
 
           </template>
-
         </a-table>
 
       </div>
@@ -194,9 +183,9 @@ export default {
 
       return this.documents.filter((d) => {
         return (
-          d.name?.toLowerCase().includes(q) ||
-          d.type?.toLowerCase().includes(q) ||
-          d.size?.toLowerCase().includes(q)
+          (d.name || "").toLowerCase().includes(q) ||
+          (d.type || "").toLowerCase().includes(q) ||
+          (d.size || "").toLowerCase().includes(q)
         );
       });
     },
@@ -207,10 +196,7 @@ export default {
       this.loading = true;
 
       try {
-        // 🔥 Adjust endpoint to your backend:
-        // /clients/:id/documents OR /projects/:id/documents
         const { data } = await api.get("/clients/documents");
-
         this.documents = data?.data || data || [];
       } catch (err) {
         console.error("Failed to fetch documents:", err);
@@ -229,7 +215,6 @@ export default {
       };
 
       const file = map[type?.toLowerCase()] || "file-default.svg";
-
       return new URL(`/src/assets/img/icons/${file}`, import.meta.url).href;
     },
 
