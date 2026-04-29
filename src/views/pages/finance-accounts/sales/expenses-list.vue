@@ -1,182 +1,289 @@
 <script>
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import moment from "moment";
-import DateRangePicker from "daterangepicker";
+import api from "@/services/api";
 
 export default {
-  data() {
-    return {
-      title: "Expenses",
-      text: "Sales",
-      text1: "Expenses",
-    };
-  },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
-    },
-  },
+  name: "ExpensesList",
+
   setup() {
-    const dateRangeInput = ref(null);
+    const loading = ref(false);
+    const expenses = ref([]);
+    const selectedExpense = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
-
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
-
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
-
-        booking_range(start, end);
-      }
+    const filters = reactive({
+      search: "",
+      startDate: "",
+      endDate: "",
+      page: 1,
+      limit: 10,
     });
 
-    return {
-      dateRangeInput,
+    const meta = reactive({
+      total: 0,
+      pages: 0,
+    });
+
+    /**
+     * FETCH EXPENSES (BACKEND SYNCED)
+     */
+    const fetchExpenses = async () => {
+      loading.value = true;
+
+      try {
+        const { data } = await api.get("/budgets/expenses", {
+          params: filters,
+        });
+
+        expenses.value = data.data || [];
+        meta.total = data.count || 0;
+        meta.pages = data.pages || 1;
+      } catch (err) {
+        console.error("Failed to load expenses:", err);
+      } finally {
+        loading.value = false;
+      }
     };
+
+    /**
+     * DELETE EXPENSE
+     */
+    const deleteExpense = async (id) => {
+      if (!confirm("Are you sure you want to delete this expense?")) return;
+
+      try {
+        await api.delete(`/budgets/expenses/${id}`);
+        await fetchExpenses();
+      } catch (err) {
+        console.error("Delete failed:", err);
+      }
+    };
+
+    /**
+     * FORMAT CURRENCY
+     */
+    const formatAmount = (val) => {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(val || 0);
+    };
+
+    /**
+     * DATE RANGE FILTER
+     */
+    const setDateRange = (start, end) => {
+      filters.startDate = start;
+      filters.endDate = end;
+      fetchExpenses();
+    };
+
+    /**
+     * PAGINATION
+     */
+    const changePage = (page) => {
+      filters.page = page;
+      fetchExpenses();
+    };
+
+    onMounted(() => {
+      fetchExpenses();
+    });
+
+    watch(
+      () => filters.search,
+      () => {
+        filters.page = 1;
+        fetchExpenses();
+      }
+    );
+
+    return {
+      expenses,
+      loading,
+      filters,
+      meta,
+      selectedExpense,
+      fetchExpenses,
+      deleteExpense,
+      formatAmount,
+      setDateRange,
+      changePage,
+      moment,
+    };
+  },
+
+  methods: {
+    toggleHeader() {
+      document.getElementById("collapse-header")?.classList.toggle("active");
+      document.body.classList.toggle("header-collapse");
+    },
   },
 };
 </script>
 
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-  <!-- Page Wrapper -->
   <div class="page-wrapper">
     <div class="content">
-      <!-- Breadcrumb -->
-      <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
-        <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
 
-          <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_expenses"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Expenses</a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
-            </a>
-          </div>
+      <!-- HEADER -->
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Expenses</h4>
+
+        <router-link
+          to="/sales/expenses/create"
+          class="btn btn-primary"
+        >
+          <i class="ti ti-circle-plus me-2"></i>
+          Add Expense
+        </router-link>
+      </div>
+
+      <!-- FILTERS -->
+      <div class="card mb-3">
+        <div class="card-body d-flex flex-wrap gap-2">
+
+          <input
+            v-model="filters.search"
+            type="text"
+            class="form-control w-auto"
+            placeholder="Search expense..."
+          />
+
+          <input
+            type="date"
+            v-model="filters.startDate"
+            class="form-control w-auto"
+          />
+
+          <input
+            type="date"
+            v-model="filters.endDate"
+            class="form-control w-auto"
+          />
+
+          <button
+            class="btn btn-outline-primary"
+            @click="fetchExpenses"
+          >
+            Filter
+          </button>
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
+      <!-- TABLE -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Expenses List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="me-3">
-              <div class="input-icon-end position-relative">
-                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                  placeholder="dd/mm/yyyy - dd/mm/yyyy" />
-                <span class="input-icon-addon">
-                  <i class="ti ti-chevron-down"></i>
-                </span>
-              </div>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                $0.00 - $00
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">$0.00 - $00</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">$3000</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">$2500</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <expenses-table></expenses-table>
-      </div>
-    </div>
+        <div class="card-body">
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
-      </p>
+          <div v-if="loading" class="text-center py-4">
+            Loading expenses...
+          </div>
+
+          <table v-else class="table table-hover">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Amount</th>
+                <th>Account</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr v-for="expense in expenses" :key="expense.id">
+
+                <td>
+                  {{ expense.name }}
+                </td>
+
+                <td>
+                  {{ formatAmount(expense.amount) }}
+                </td>
+
+                <td>
+                  {{ expense.expenseAccountId }}
+                </td>
+
+                <td>
+                  {{ moment(expense.createdAt).format("DD MMM YYYY") }}
+                </td>
+
+                <td>
+                  <span
+                    class="badge"
+                    :class="expense.status === 'APPROVED' ? 'bg-success' : 'bg-warning'"
+                  >
+                    {{ expense.status || 'PENDING' }}
+                  </span>
+                </td>
+
+                <td class="text-end">
+
+                  <button
+                    class="btn btn-sm btn-light me-2"
+                    @click="$router.push(`/sales/expenses/${expense.id}`)"
+                  >
+                    View
+                  </button>
+
+                  <button
+                    class="btn btn-sm btn-danger"
+                    @click="deleteExpense(expense.id)"
+                  >
+                    Delete
+                  </button>
+
+                </td>
+
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- EMPTY STATE -->
+          <div v-if="!loading && expenses.length === 0" class="text-center py-5">
+            No expenses found
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="d-flex justify-content-between align-items-center mt-3">
+
+        <div>
+          Showing {{ expenses.length }} of {{ meta.total }}
+        </div>
+
+        <div class="btn-group">
+          <button
+            class="btn btn-outline-secondary"
+            :disabled="filters.page === 1"
+            @click="changePage(filters.page - 1)"
+          >
+            Prev
+          </button>
+
+          <button class="btn btn-light">
+            {{ filters.page }}
+          </button>
+
+          <button
+            class="btn btn-outline-secondary"
+            :disabled="filters.page >= meta.pages"
+            @click="changePage(filters.page + 1)"
+          >
+            Next
+          </button>
+        </div>
+
+      </div>
+
     </div>
   </div>
-  <!-- /Page Wrapper -->
 
-  <expenses-modal></expenses-modal>
 </template>
