@@ -1,196 +1,335 @@
-<script>
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
-import moment from "moment";
-import DateRangePicker from "daterangepicker";
+<script setup>
+import { ref, reactive, onMounted } from "vue";
+import api from "@/services/api";
 
-export default {
-  data() {
-    return {
-      title: "Provident Fund",
-      text: "Sales",
-      text1: "Provident Fund",
-    };
-  },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
-    },
-  },
-  setup() {
-    const dateRangeInput = ref(null);
+/**
+ * =========================
+ * PAGE META
+ * =========================
+ */
+const title = "Provident Fund";
+const text = "Finance Accounts";
+const text1 = "Provident Fund";
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
+/**
+ * =========================
+ * UI STATE
+ * =========================
+ */
+const loading = ref(false);
+const saving = ref(false);
 
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
+const expenses = ref([]);
+const selectedId = ref(null);
 
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
+/**
+ * =========================
+ * FILTER STATE
+ * =========================
+ */
+const filters = reactive({
+  startDate: "",
+  endDate: "",
+  status: "",
+  type: "PROVIDENT_FUND",
+  search: "",
+});
 
-        booking_range(start, end);
-      }
+/**
+ * =========================
+ * MODAL STATE
+ * =========================
+ */
+const form = reactive({
+  name: "",
+  amount: "",
+  expenseDate: "",
+  expenseAccountId: "",
+  cashAccountId: "",
+  status: "PENDING",
+});
+
+/**
+ * =========================
+ * HEADER TOGGLE
+ * =========================
+ */
+const toggleHeader = () => {
+  const el = document.getElementById("collapse-header");
+  if (el) el.classList.toggle("active");
+  document.body.classList.toggle("header-collapse");
+};
+
+/**
+ * =========================
+ * FETCH LIST (BACKEND SYNC)
+ * /budget/expenses
+ * =========================
+ */
+const fetchExpenses = async () => {
+  try {
+    loading.value = true;
+
+    const { data } = await api.get("/budget/expenses", {
+      params: {
+        ...filters,
+      },
     });
 
-    return {
-      dateRangeInput,
-    };
-  },
+    expenses.value = data?.data || [];
+  } catch (err) {
+    console.error("Failed to load provident fund:", err);
+  } finally {
+    loading.value = false;
+  }
 };
+
+/**
+ * =========================
+ * CREATE EXPENSE (PROVIDENT FUND ENTRY)
+ * =========================
+ */
+const createExpense = async () => {
+  try {
+    saving.value = true;
+
+    await api.post("/budget/expenses", {
+      ...form,
+      category: "PROVIDENT_FUND",
+      type: "PROVIDENT_FUND",
+    });
+
+    await fetchExpenses();
+    resetForm();
+  } catch (err) {
+    console.error("Create failed:", err);
+  } finally {
+    saving.value = false;
+  }
+};
+
+/**
+ * =========================
+ * UPDATE EXPENSE
+ * =========================
+ */
+const updateExpense = async () => {
+  try {
+    if (!selectedId.value) return;
+
+    saving.value = true;
+
+    await api.patch(`/budget/expenses/${selectedId.value}`, {
+      ...form,
+    });
+
+    await fetchExpenses();
+    resetForm();
+  } catch (err) {
+    console.error("Update failed:", err);
+  } finally {
+    saving.value = false;
+  }
+};
+
+/**
+ * =========================
+ * DELETE EXPENSE
+ * =========================
+ */
+const deleteExpense = async (id) => {
+  try {
+    await api.delete(`/budget/expenses/${id}`);
+    await fetchExpenses();
+  } catch (err) {
+    console.error("Delete failed:", err);
+  }
+};
+
+/**
+ * =========================
+ * EDIT HANDLER
+ * =========================
+ */
+const editExpense = (item) => {
+  selectedId.value = item.id;
+
+  form.name = item.name;
+  form.amount = item.amount;
+  form.expenseDate = item.expenseDate;
+  form.expenseAccountId = item.expenseAccountId;
+  form.cashAccountId = item.cashAccountId;
+  form.status = item.status;
+};
+
+/**
+ * =========================
+ * RESET FORM
+ * =========================
+ */
+const resetForm = () => {
+  selectedId.value = null;
+
+  form.name = "";
+  form.amount = "";
+  form.expenseDate = "";
+  form.expenseAccountId = "";
+  form.cashAccountId = "";
+  form.status = "PENDING";
+};
+
+/**
+ * =========================
+ * FILTER ACTIONS
+ * =========================
+ */
+const applyFilters = () => fetchExpenses();
+const clearFilters = () => {
+  filters.startDate = "";
+  filters.endDate = "";
+  filters.status = "";
+  filters.search = "";
+  fetchExpenses();
+};
+
+/**
+ * =========================
+ * LIFECYCLE
+ * =========================
+ */
+onMounted(() => {
+  fetchExpenses();
+});
 </script>
 
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-  <!-- Page Wrapper -->
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="me-2 mb-2">
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
 
-          <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_provident-fund"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Provident
-              Fund</a>
-          </div>
+        <div class="d-flex align-items-center flex-wrap">
+
+          <button
+            class="btn btn-primary d-flex align-items-center"
+            data-bs-toggle="modal"
+            data-bs-target="#add_provident-fund"
+          >
+            <i class="ti ti-circle-plus me-2"></i>
+            Add Provident Fund
+          </button>
+
           <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
+            <a
+              href="javascript:void(0);"
+              id="collapse-header"
+              @click="toggleHeader"
+              class="btn btn-light"
+            >
               <i class="ti ti-chevrons-up"></i>
             </a>
           </div>
+
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
+      <!-- Card -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Expenses List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="me-3">
-              <div class="input-icon-end position-relative">
-                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                  placeholder="dd/mm/yyyy - dd/mm/yyyy" />
-                <span class="input-icon-addon">
-                  <i class="ti ti-chevron-down"></i>
-                </span>
-              </div>
-            </div>
 
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Provident Fund Type
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Employee Provident Fund</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Voluntary Provident Fund</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Select status
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Approved</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Pending</a>
-                </li>
-              </ul>
-            </div>
+        <!-- Filters -->
+        <div class="card-header d-flex justify-content-between flex-wrap">
 
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
+          <h5 class="mb-0">Provident Fund List</h5>
+
+          <div class="d-flex flex-wrap gap-2">
+
+            <input
+              v-model="filters.search"
+              class="form-control"
+              placeholder="Search..."
+              @input="applyFilters"
+            />
+
+            <select v-model="filters.status" class="form-control" @change="applyFilters">
+              <option value="">All Status</option>
+              <option value="APPROVED">Approved</option>
+              <option value="PENDING">Pending</option>
+            </select>
+
+            <button class="btn btn-light" @click="clearFilters">
+              Reset
+            </button>
+
           </div>
         </div>
-        <provident-table></provident-table>
+
+        <!-- Table -->
+        <div class="card-body">
+
+          <div v-if="loading" class="text-center py-4">
+            Loading...
+          </div>
+
+          <div v-else class="table-responsive">
+
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                <tr v-for="item in expenses" :key="item.id">
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.amount }}</td>
+                  <td>{{ item.expenseDate }}</td>
+                  <td>
+                    <span class="badge bg-soft-primary">
+                      {{ item.status }}
+                    </span>
+                  </td>
+
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-light me-2" @click="editExpense(item)">
+                      Edit
+                    </button>
+
+                    <button class="btn btn-sm btn-danger" @click="deleteExpense(item.id)">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+
+            </table>
+
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+    <!-- Footer -->
+    <div class="footer d-sm-flex justify-content-between border-top bg-white p-3">
       <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
       <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
+        Designed & Developed By
+        <a class="text-primary">Dreams</a>
       </p>
     </div>
-  </div>
-  <!-- /Page Wrapper -->
 
-  <provident-modal></provident-modal>
+  </div>
+
+  <!-- Modal -->
+  <provident-modal />
 </template>
