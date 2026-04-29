@@ -1,334 +1,267 @@
 <script>
-const data = [
-  {
-    key: "1",
-    Client_Name: "Michael Walker",
-    Image: "user-09.jpg",
-    Roll: "CEO",
-    Company_Name: "BrightWave Innovations",
-    Estimate_Date: "14 Jan 2024",
-    Expiry_Date: "15 Jan 2024",
-    Amount: "$3000",
-    Status: "Accepted",
-  },
-  {
-    key: "2",
-    Client_Name: "Sophie Headrick",
-    Image: "user-40.jpg",
-    Roll: "Manager",
-    Company_Name: "Stellar Dynamics",
-    Estimate_Date: "21 Jan 2024",
-    Expiry_Date: "25 Jan 2024",
-    Amount: "$2500",
-    Status: "Sent",
-  },
-  {
-    key: "3",
-    Client_Name: "Cameron Drake",
-    Image: "user-41.jpg",
-    Roll: "Director",
-    Company_Name: "Quantum Nexus",
-    Estimate_Date: "20 Feb 2024",
-    Expiry_Date: "22 Feb 2024",
-    Amount: "$2800",
-    Status: "Expired",
-  },
-  {
-    key: "4",
-    Client_Name: "Doris Crowley",
-    Image: "user-42.jpg",
-    Roll: "Consultant",
-    Company_Name: "EcoVision Enterprises",
-    Estimate_Date: "15 Mar 2024",
-    Expiry_Date: "17 Mar 2024",
-    Amount: "$3300",
-    Status: "Accepted",
-  },
-  {
-    key: "5",
-    Client_Name: "Thomas Bordelon",
-    Image: "user-44.jpg",
-    Roll: "Manager",
-    Company_Name: "Aurora Technologies",
-    Estimate_Date: "12 Apr 2024",
-    Expiry_Date: "16 Apr 2024",
-    Amount: "$3600",
-    Status: "Declined",
-  },
-  {
-    key: "6",
-    Client_Name: "Kathleen Gutierrez",
-    Image: "user-45.jpg",
-    Roll: "Director",
-    Company_Name: "BlueSky Ventures",
-    Estimate_Date: "20 May 2024",
-    Expiry_Date: "21 May 2024",
-    Amount: "$2000",
-    Status: "Sent",
-  },
-  {
-    key: "7",
-    Client_Name: "Bruce Wright",
-    Image: "user-46.jpg",
-    Roll: "CEO",
-    Company_Name: "TerraFusion Energy",
-    Estimate_Date: "06 Jul 2024",
-    Expiry_Date: "06 Jul 2024",
-    Amount: "$3400",
-    Status: "Expired",
-  },
-  {
-    key: "8",
-    Client_Name: "Estelle Morgan",
-    Image: "user-47.jpg",
-    Roll: "Manager",
-    Company_Name: "UrbanPulse Design",
-    Estimate_Date: "02 Sep 2024",
-    Expiry_Date: "04 Sep 2024",
-    Amount: "$4000",
-    Status: "Declined",
-  },
-  {
-    key: "9",
-    Client_Name: "Stephen Dias",
-    Image: "user-48.jpg",
-    Roll: "CEO",
-    Company_Name: "Nimbus Networks",
-    Estimate_Date: "15 Nov 2024",
-    Expiry_Date: "15 Nov 2024",
-    Amount: "$4500",
-    Status: "Accepted",
-  },
-  {
-    key: "10",
-    Client_Name: "Angela Thomas",
-    Image: "user-43.jpg",
-    Roll: "Consultant",
-    Company_Name: "Epicurean Delights",
-    Estimate_Date: "10 Dec 2024",
-    Expiry_Date: "11 Dec 2024",
-    Amount: "$3800",
-    Status: "Sent",
-  },
-];
-
-const columns = [
-  {
-    sorter: false,
-  },
-  {
-    title: "Client Name",
-    dataIndex: "Client_Name",
-    key: "Client_Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Client_Name.toLowerCase();
-        b = b.Client_Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Company Name",
-    dataIndex: "Company_Name",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Company_Name.toLowerCase();
-        b = b.Company_Name.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Estimate Date",
-    dataIndex: "Estimate_Date",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Estimate_Date.toLowerCase();
-        b = b.Estimate_Date.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Expiry Date",
-    dataIndex: "Expiry_Date",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Expiry_Date.toLowerCase();
-        b = b.Expiry_Date.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Amount",
-    dataIndex: "Amount",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Amount.toLowerCase();
-        b = b.Amount.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "Status",
-    dataIndex: "Status",
-    key: "Status",
-    sorter: {
-      compare: (a, b) => {
-        a = a.Status.toLowerCase();
-        b = b.Status.toLowerCase();
-        return a > b ? -1 : b > a ? 1 : 0;
-      },
-    },
-  },
-  {
-    title: "",
-    key: "action",
-    sorter: true,
-  },
-];
-
-const rowSelection = {
-  onChange: () => { },
-  onSelect: () => { },
-  onSelectAll: () => { },
-};
+import api from "@/services/api";
 
 export default {
   data() {
     return {
-      data,
-      columns,
-      rowSelection,
-      searchQuery: '',
+      loading: false,
+      invoices: [],
+      searchQuery: "",
       currentPage: 1,
       pageSize: 10,
+      total: 0,
     };
   },
+
   computed: {
-    filteredPages() {
-      const query = this.searchQuery.toLowerCase();
-      return this.data.filter((record) => {
+    filteredData() {
+      const q = this.searchQuery.toLowerCase();
+
+      return this.invoices.filter((inv) => {
         return (
-          record.Client_Name.toLowerCase().includes(query) ||
-          record.Roll.toLowerCase().includes(query) ||
-          record.Company_Name.toLowerCase().includes(query) ||
-          record.Estimate_Date.toLowerCase().includes(query) ||
-          record.Expiry_Date.toLowerCase().includes(query) ||
-          record.Amount.toLowerCase().includes(query) ||
-          record.Status.toLowerCase().includes(query)
+          inv.customerName?.toLowerCase().includes(q) ||
+          inv.invoiceNumber?.toLowerCase().includes(q) ||
+          inv.status?.toLowerCase().includes(q)
         );
       });
     },
+
     paginatedData() {
       const start = (this.currentPage - 1) * this.pageSize;
-      return this.filteredPages.slice(start, start + this.pageSize);
+      return this.filteredData.slice(start, start + this.pageSize);
     },
+
     totalPages() {
-      return Math.ceil(this.filteredPages.length / this.pageSize) || 1;
+      return Math.ceil(this.filteredData.length / this.pageSize) || 1;
+    },
+
+    columns() {
+      return [
+        { title: "Invoice No", dataIndex: "invoiceNumber" },
+        { title: "Customer", dataIndex: "customerName" },
+        { title: "Invoice Date", dataIndex: "invoiceDate" },
+        { title: "Due Date", dataIndex: "dueDate" },
+        { title: "Amount", dataIndex: "totalAmount" },
+        { title: "Status", key: "status" },
+        { title: "Action", key: "action" },
+      ];
     },
   },
+
+  mounted() {
+    this.fetchInvoices();
+  },
+
   methods: {
-    getImageUrl(imageName) {
-      return new URL(`/src/assets/img/users/${imageName}`, import.meta.url)
-        .href;
+    async fetchInvoices() {
+      try {
+        this.loading = true;
+
+        const { data } = await api.get("/invoices");
+
+        this.invoices = data.data || [];
+        this.total = this.invoices.length;
+      } catch (err) {
+        console.error("Failed to fetch invoices", err);
+      } finally {
+        this.loading = false;
+      }
     },
-  }
+
+    formatCurrency(val) {
+      if (!val) return "₦0";
+      return `₦${Number(val).toLocaleString()}`;
+    },
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
+    },
+
+    getStatusClass(status) {
+      switch (status) {
+        case "PAID":
+          return "badge-soft-success";
+        case "SENT":
+          return "badge-soft-purple";
+        case "DRAFT":
+          return "badge-soft-warning";
+        default:
+          return "badge-soft-secondary";
+      }
+    },
+
+    async downloadPDF(id) {
+      try {
+        const response = await api.get(`/invoices/${id}/pdf`, {
+          responseType: "blob",
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `invoice-${id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+      } catch (err) {
+        console.error("PDF download failed", err);
+      }
+    },
+
+    async payInvoice(id) {
+      try {
+        const { data } = await api.post(`/invoices/${id}/pay`);
+
+        // redirect to Paystack
+        window.location.href = data.data.authorization_url;
+      } catch (err) {
+        console.error("Payment init failed", err);
+      }
+    },
+
+    goToEdit(id) {
+      this.$router.push(`/sales/invoices/edit/${id}`);
+    },
+
+    goToView(id) {
+      this.$router.push(`/sales/invoices/${id}`);
+    },
+  },
 };
 </script>
 
 <template>
   <div class="card-body p-0">
-    <div class="row">
-      <div class="col-sm-12 col-md-6">
-        <div class="dataTables_length" id="DataTables_Table_0_length"><label>Row Per Page
-            <select v-model="pageSize" name="DataTables_Table_0_length" aria-controls="DataTables_Table_0"
-              class="form-select form-select-sm">
-              <option value="10">10</option>
-              <option value="25">25</option>
-              <option value="50">50</option>
-              <option value="100">100</option>
-            </select> Entries</label></div>
+    <!-- Filters -->
+    <div class="row mb-3 px-3">
+      <div class="col-md-6">
+        <select v-model="pageSize" class="form-select form-select-sm w-auto">
+          <option :value="10">10</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+        </select>
       </div>
-      <div class="col-sm-12 col-md-6">
-        <div id="DataTables_Table_0_filter" class="dataTables_filter"><label> <input v-model="searchQuery" type="search"
-              class="form-control form-control-sm" placeholder="Search" aria-controls="DataTables_Table_0"></label>
-        </div>
+
+      <div class="col-md-6 text-end">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="form-control form-control-sm w-50 d-inline-block"
+          placeholder="Search invoices..."
+        />
       </div>
     </div>
-    <div class="custom-datatable-filter table-responsive">
-      <a-table class="table datatable thead-light" :columns="columns" :data-source="paginatedData"
-        :row-selection="rowSelection">
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <a-table
+        :columns="columns"
+        :data-source="paginatedData"
+        :loading="loading"
+        rowKey="id"
+        class="table"
+      >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'Client_Name'">
-            <div class="d-flex align-items-center file-name-icon">
-              <a href="javascript:void(0);" class="avatar avatar-md avatar-rounded">
-                <img :src="getImageUrl(record.Image)" class="img-fluid" alt="img" />
-              </a>
-              <div class="ms-2">
-                <h6 class="fw-medium">
-                  <a href="javascript:void(0);">{{ record.Client_Name }}</a>
-                </h6>
-                <span class="d-block mt-1">{{ record.Roll }}</span>
-              </div>
-            </div>
+          <!-- Customer -->
+          <template v-if="column.dataIndex === 'customerName'">
+            <strong>{{ record.customerName }}</strong>
           </template>
-          <template v-if="column.key === 'Status'">
-            <span class="badge" :class="[
-              record.Status === 'Accepted'
-                ? 'badge-soft-success'
-                : record.Status === 'Sent'
-                  ? 'badge-soft-purple'
-                  : record.Status === 'Expired'
-                    ? 'badge-soft-warning'
-                    : 'badge-soft-danger',
-            ]">{{ record.Status }}</span>
+
+          <!-- Dates -->
+          <template v-if="column.dataIndex === 'invoiceDate'">
+            {{ formatDate(record.invoiceDate) }}
           </template>
+
+          <template v-if="column.dataIndex === 'dueDate'">
+            {{ formatDate(record.dueDate) }}
+          </template>
+
+          <!-- Amount -->
+          <template v-if="column.dataIndex === 'totalAmount'">
+            {{ formatCurrency(record.totalAmount) }}
+          </template>
+
+          <!-- Status -->
+          <template v-if="column.key === 'status'">
+            <span class="badge" :class="getStatusClass(record.status)">
+              {{ record.status }}
+            </span>
+          </template>
+
+          <!-- Actions -->
           <template v-if="column.key === 'action'">
-            <div class="action-icon d-inline-flex">
-              <a href="javascript:void(0);" class="me-2" data-bs-toggle="modal" data-bs-target="#edit_estimate"><i
-                  class="ti ti-edit"></i></a>
-              <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#delete_modal"><i
-                  class="ti ti-trash"></i></a>
+            <div class="d-flex gap-2">
+              <button
+                class="btn btn-sm btn-light"
+                @click="goToView(record.id)"
+              >
+                View
+              </button>
+
+              <button
+                class="btn btn-sm btn-light"
+                @click="goToEdit(record.id)"
+              >
+                Edit
+              </button>
+
+              <button
+                class="btn btn-sm btn-light"
+                @click="downloadPDF(record.id)"
+              >
+                PDF
+              </button>
+
+              <button
+                v-if="record.status !== 'PAID'"
+                class="btn btn-sm btn-primary"
+                @click="payInvoice(record.id)"
+              >
+                Pay
+              </button>
             </div>
           </template>
         </template>
       </a-table>
     </div>
-    <div class="row pagination">
-      <div class="col-sm-12 col-md-5">
-        <div class="dataTables_info" id="DataTables_Table_0_info" role="status" aria-live="polite">
-          Showing {{
-            (currentPage - 1) * pageSize + 1 }} - {{ Math.min(currentPage * pageSize,
-            filteredPages.length) }} of {{
-            filteredPages.length }}
-          entries</div>
-      </div>
-      <div class="col-sm-12 col-md-7">
-        <div class="dataTables_paginate paging_simple_numbers" id="DataTables_Table_0_paginate">
-          <ul class="pagination">
-            <li class="paginate_button page-item previous" :class="{ disabled: currentPage === 1 }"
-              id="DataTables_Table_0_previous"><a aria-controls="DataTables_Table_0" aria-disabled="true" role="link"
-                data-dt-idx="previous" tabindex="-1" class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage > 1 ? currentPage-- : null"><i class="ti ti-chevron-left"></i>
-              </a></li>
-            <li class="paginate_button page-item" :class="{ active: page === currentPage }" v-for="page in totalPages"
-              :key="page">
-              <a href="javascript:void(0);" @click.prevent="currentPage = page" aria-controls="DataTables_Table_0"
-                role="link" aria-current="page" data-dt-idx="0" tabindex="0" class="page-link">{{ page }}</a>
-            </li>
-            <li class="paginate_button page-item next" :class="{ disabled: currentPage === totalPages }"
-              id="DataTables_Table_0_next">
-              <a aria-controls="DataTables_Table_0" aria-disabled="true" role="link" data-dt-idx="next" tabindex="-1"
-                class="page-link" href="javascript:void(0);"
-                @click.prevent="currentPage < totalPages ? currentPage++ : null"><i class="ti ti-chevron-right"></i></a>
-            </li>
-          </ul>
-        </div>
-      </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center p-3">
+      <span>
+        Showing
+        {{ (currentPage - 1) * pageSize + 1 }}
+        -
+        {{ Math.min(currentPage * pageSize, filteredData.length) }}
+        of {{ filteredData.length }}
+      </span>
+
+      <ul class="pagination mb-0">
+        <li class="page-item" :class="{ disabled: currentPage === 1 }">
+          <a class="page-link" href="#" @click.prevent="currentPage--">
+            ‹
+          </a>
+        </li>
+
+        <li
+          v-for="page in totalPages"
+          :key="page"
+          class="page-item"
+          :class="{ active: page === currentPage }"
+        >
+          <a class="page-link" href="#" @click.prevent="currentPage = page">
+            {{ page }}
+          </a>
+        </li>
+
+        <li
+          class="page-item"
+          :class="{ disabled: currentPage === totalPages }"
+        >
+          <a class="page-link" href="#" @click.prevent="currentPage++">
+            ›
+          </a>
+        </li>
+      </ul>
     </div>
   </div>
 </template>
