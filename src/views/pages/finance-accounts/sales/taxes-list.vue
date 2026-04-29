@@ -1,10 +1,7 @@
 <script>
-import "daterangepicker/daterangepicker.css";
-import "daterangepicker/daterangepicker.js";
-import { ref } from "vue";
-import { onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import moment from "moment";
-import DateRangePicker from "daterangepicker";
+import api from "@/services/api";
 
 export default {
   data() {
@@ -12,169 +9,208 @@ export default {
       title: "Taxes",
       text: "Sales",
       text1: "Taxes",
+
+      taxes: [],
+      loading: false,
+
+      search: "",
+      selectedTaxType: "",
+      sortBy: "latest",
+
+      dateRange: {
+        start: null,
+        end: null,
+      },
     };
   },
-  methods: {
-    toggleHeader() {
-      document.getElementById("collapse-header").classList.toggle("active");
-      document.body.classList.toggle("header-collapse");
+
+  computed: {
+    filteredTaxes() {
+      let data = [...this.taxes];
+
+      // search filter
+      if (this.search) {
+        const q = this.search.toLowerCase();
+        data = data.filter(
+          (t) =>
+            t.name?.toLowerCase().includes(q) ||
+            String(t.rate).includes(q) ||
+            t.status?.toLowerCase().includes(q)
+        );
+      }
+
+      // tax type filter
+      if (this.selectedTaxType) {
+        data = data.filter((t) => t.name === this.selectedTaxType);
+      }
+
+      // date filter (createdAt assumed)
+      if (this.dateRange.start && this.dateRange.end) {
+        data = data.filter((t) => {
+          const created = moment(t.createdAt);
+          return (
+            created.isSameOrAfter(this.dateRange.start) &&
+            created.isSameOrBefore(this.dateRange.end)
+          );
+        });
+      }
+
+      // sorting
+      if (this.sortBy === "ascending") {
+        data.sort((a, b) => a.name.localeCompare(b.name));
+      }
+
+      if (this.sortBy === "descending") {
+        data.sort((a, b) => b.name.localeCompare(a.name));
+      }
+
+      if (this.sortBy === "latest") {
+        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      }
+
+      return data;
     },
   },
-  setup() {
-    const dateRangeInput = ref(null);
 
-    // Move the function declaration outside of the onMounted callback
-    function booking_range(start, end) {
-      return start.format("M/D/YYYY") + " - " + end.format("M/D/YYYY");
-    }
+  methods: {
+    toggleHeader() {
+      const el = document.getElementById("collapse-header");
+      if (el) el.classList.toggle("active");
+      document.body.classList.toggle("header-collapse");
+    },
 
-    onMounted(() => {
-      if (dateRangeInput.value) {
-        const start = moment().subtract(6, "days");
-        const end = moment();
+    async fetchTaxes() {
+      this.loading = true;
 
-        new DateRangePicker(
-          dateRangeInput.value,
-          {
-            startDate: start,
-            endDate: end,
-            ranges: {
-              Today: [moment(), moment()],
-              Yesterday: [moment().subtract(1, "days"), moment().subtract(1, "days")],
-              "Last 7 Days": [moment().subtract(6, "days"), moment()],
-              "Last 30 Days": [moment().subtract(29, "days"), moment()],
-              "This Month": [moment().startOf("month"), moment().endOf("month")],
-              "Last Month": [
-                moment().subtract(1, "month").startOf("month"),
-                moment().subtract(1, "month").endOf("month"),
-              ],
-            },
-          },
-          booking_range
-        );
+      try {
+        const { data } = await api.get("/taxes");
 
-        booking_range(start, end);
+        this.taxes = data.data || [];
+      } catch (err) {
+        console.error("Failed to load taxes:", err);
+      } finally {
+        this.loading = false;
       }
-    });
+    },
 
-    return {
-      dateRangeInput,
-    };
+    setSort(value) {
+      this.sortBy = value;
+    },
+
+    setTaxType(type) {
+      this.selectedTaxType = type;
+    },
+
+    setDateRange(start, end) {
+      this.dateRange.start = start;
+      this.dateRange.end = end;
+    },
+  },
+
+  mounted() {
+    this.fetchTaxes();
   },
 };
 </script>
 
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-  <!-- Page Wrapper -->
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
+
+        <div class="d-flex align-items-center flex-wrap">
+
           <div class="me-2 mb-2">
             <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                <i class="ti ti-file-export me-1"></i>Export
+              <a class="btn btn-white dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="ti ti-file-export me-1"></i> Export
               </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-pdf me-1"></i>Export as PDF</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1"><i
-                      class="ti ti-file-type-xls me-1"></i>Export as Excel
-                  </a>
-                </li>
+
+              <ul class="dropdown-menu dropdown-menu-end p-2">
+                <li><a class="dropdown-item">Export PDF</a></li>
+                <li><a class="dropdown-item">Export Excel</a></li>
               </ul>
             </div>
           </div>
+
           <div class="mb-2">
-            <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_tax"
-              class="btn btn-primary d-flex align-items-center"><i class="ti ti-circle-plus me-2"></i>Add Tax</a>
-          </div>
-          <div class="head-icons ms-2">
-            <a href="javascript:void(0);" class="" data-bs-toggle="tooltip" data-bs-placement="top"
-              data-bs-original-title="Collapse" id="collapse-header" @click="toggleHeader">
-              <i class="ti ti-chevrons-up"></i>
+            <a class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#add_tax">
+              <i class="ti ti-circle-plus me-2"></i> Add Tax
             </a>
           </div>
+
         </div>
       </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Policy list -->
+      <!-- Card -->
       <div class="card">
-        <div class="card-header d-flex align-items-center justify-content-between flex-wrap row-gap-3">
-          <h5>Tax List</h5>
-          <div class="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-            <div class="me-3">
-              <div class="input-icon-end position-relative">
-                <input type="text" class="form-control date-range bookingrange" ref="dateRangeInput"
-                  placeholder="dd/mm/yyyy - dd/mm/yyyy" />
-                <span class="input-icon-addon">
-                  <i class="ti ti-chevron-down"></i>
-                </span>
-              </div>
-            </div>
-            <div class="dropdown me-3">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Taxes List
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">VAT</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">GST</a>
-                </li>
-              </ul>
-            </div>
-            <div class="dropdown">
-              <a href="javascript:void(0);" class="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown">
-                Sort By : Last 7 Days
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Recently Added</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Ascending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Descending</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last Month</a>
-                </li>
-                <li>
-                  <a href="javascript:void(0);" class="dropdown-item rounded-1">Last 7 Days</a>
-                </li>
-              </ul>
-            </div>
+
+        <!-- Filters -->
+        <div class="card-header d-flex justify-content-between flex-wrap gap-2">
+
+          <h5 class="mb-0">Tax List</h5>
+
+          <div class="d-flex flex-wrap gap-2">
+
+            <!-- search -->
+            <input
+              v-model="search"
+              class="form-control form-control-sm"
+              placeholder="Search taxes..."
+            />
+
+            <!-- tax filter -->
+            <select
+              class="form-select form-select-sm"
+              v-model="selectedTaxType"
+            >
+              <option value="">All Taxes</option>
+              <option v-for="t in taxes" :key="t.id" :value="t.name">
+                {{ t.name }}
+              </option>
+            </select>
+
+            <!-- sort -->
+            <select
+              class="form-select form-select-sm"
+              v-model="sortBy"
+            >
+              <option value="latest">Latest</option>
+              <option value="ascending">Ascending</option>
+              <option value="descending">Descending</option>
+            </select>
+
           </div>
         </div>
-        <taxes-table></taxes-table>
+
+        <!-- Table -->
+        <taxes-table
+          :data="filteredTaxes"
+          :loading="loading"
+        />
+
       </div>
-      <!-- /Policylist list -->
+
     </div>
 
-    <div class="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-      <p class="mb-0">2014 - {{ new Date().getFullYear() }} &copy; SmartHR.</p>
+    <!-- footer -->
+    <div class="footer d-sm-flex justify-content-between border-top bg-white p-3">
+      <p class="mb-0">
+        2014 - {{ new Date().getFullYear() }} © SmartHR.
+      </p>
       <p>
-        Designed &amp; Developed By
-        <a href="javascript:void(0);" class="text-primary">Dreams</a>
+        Designed & Developed By
+        <a class="text-primary">Dreams</a>
       </p>
     </div>
-  </div>
-  <!-- /Page Wrapper -->
 
-  <taxes-modal></taxes-modal>
+  </div>
+
+  <taxes-modal />
 </template>
