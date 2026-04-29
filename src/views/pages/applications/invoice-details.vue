@@ -1,25 +1,31 @@
 <template>
-  <layout-header></layout-header>
-  <layout-sidebar></layout-sidebar>
-  <!-- Page Wrapper -->
+  <layout-header />
+  <layout-sidebar />
+
   <div class="page-wrapper">
     <div class="content">
+
       <!-- Breadcrumb -->
       <div class="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
         <breadcrumb :title="title" :text="text" :text1="text1" />
-        <div class="d-flex my-xl-auto right-content align-items-center flex-wrap">
-          <div class="mb-2">
-            <a href="javascript:void(0);" class="btn btn-dark d-flex align-items-center"><i
-                class="ti ti-download me-2"></i>Download</a>
-          </div>
-        </div>
       </div>
-      <!-- /Breadcrumb -->
 
-      <!-- Invoices -->
-      <div>
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-5">
+        <span class="spinner-border"></span>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <!-- Invoice -->
+      <div v-else-if="invoice">
         <div class="row">
           <div class="col-sm-10 mx-auto">
+
+            <!-- Back -->
             <router-link to="/applications/invoices"
               class="back-icon d-flex align-items-center fs-12 fw-medium mb-3 d-inline-flex">
               <span class="d-flex justify-content-center align-items-center rounded-circle me-2">
@@ -27,219 +33,244 @@
               </span>
               Back to List
             </router-link>
+
             <div class="card">
               <div class="card-body">
+
+                <!-- Header -->
                 <div class="row justify-content-between align-items-center border-bottom mb-3">
                   <div class="col-md-6">
-                    <div class="mb-2 invoice-logo">
-                      <img src="@/assets/img/logo.jpeg" class="img-fluid logo" alt="logo">
-                      <img src="@/assets/img/logo-white.png" class="img-fluid logo-white d-none" alt="logo">
-                    </div>
-                    <p>3099 Kennedy Court Framingham, MA 01702</p>
+                    <img src="@/assets/img/logo.jpeg" class="img-fluid logo" alt="logo" />
+                    <p class="mt-2">{{ invoice.tenantAddress || "N/A" }}</p>
                   </div>
+
+                  <div class="col-md-6 text-end">
+                    <h5>
+                      Invoice No:
+                      <span class="text-primary">#{{ invoice.invoiceNumber }}</span>
+                    </h5>
+                    <p>Created: {{ formatDate(invoice.createdAt) }}</p>
+                  </div>
+                </div>
+
+                <!-- Parties -->
+                <div class="row border-bottom mb-3">
                   <div class="col-md-6">
-                    <div class="text-end mb-3">
-                      <h5 class="text-gray mb-1">
-                        Invoice No <span class="text-primary">#INV0001</span>
-                      </h5>
-                      <p class="mb-1 fw-medium">
-                        Created Date : <span class="text-dark">Sep 24, 2023</span>
-                      </p>
-                      <p class="fw-medium">
-                        Due Date : <span class="text-dark">Sep 30, 2023</span>
-                      </p>
-                    </div>
+                    <h6>From</h6>
+                    <p class="mb-1">{{ invoice.createdByName || "Company" }}</p>
+                  </div>
+
+                  <div class="col-md-6">
+                    <h6>To</h6>
+                    <p class="mb-1">{{ invoice.customerName || "N/A" }}</p>
+                    <p class="mb-1">{{ invoice.customerEmail }}</p>
                   </div>
                 </div>
+
+                <!-- Status -->
+                <div class="mb-3">
+                  <span class="badge"
+                    :class="invoice.status === 'PAID' ? 'badge-success' : 'badge-danger'">
+                    {{ invoice.status }}
+                  </span>
+                </div>
+
+                <!-- Items -->
+                <div class="table-responsive mb-3">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th>Description</th>
+                        <th class="text-end">Qty</th>
+                        <th class="text-end">Rate</th>
+                        <th class="text-end">Discount</th>
+                        <th class="text-end">Total</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      <tr v-for="item in invoice.items" :key="item.id">
+                        <td>{{ item.description }}</td>
+                        <td class="text-end">{{ item.quantity }}</td>
+                        <td class="text-end">{{ formatMoney(item.rate) }}</td>
+                        <td class="text-end">{{ formatMoney(item.discount || 0) }}</td>
+                        <td class="text-end">
+                          {{ formatMoney(item.total || (item.quantity * item.rate)) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Summary -->
                 <div class="row border-bottom mb-3">
-                  <div class="col-md-5">
-                    <p class="text-dark mb-2 fw-semibold">From</p>
-                    <div>
-                      <h4 class="mb-1">Thomas Lawler</h4>
-                      <p class="mb-1">2077 Chicago Avenue Orosi, CA 93647</p>
-                      <p class="mb-1">
-                        Email : <span class="text-dark">Tarala2445@example.com</span>
-                      </p>
-                      <p>Phone : <span class="text-dark">+1 987 654 3210</span></p>
-                    </div>
+                  <div class="col-md-6">
+                    <h6>Notes</h6>
+                    <p>Please reference invoice number for payment.</p>
                   </div>
-                  <div class="col-md-5">
-                    <p class="text-dark mb-2 fw-semibold">To</p>
-                    <div>
-                      <h4 class="mb-1">Sara Inc,.</h4>
-                      <p class="mb-1">3103 Trainer Avenue Peoria, IL 61602</p>
-                      <p class="mb-1">
-                        Email : <span class="text-dark">Sara_inc34@example.com</span>
-                      </p>
-                      <p>Phone : <span class="text-dark">+1 987 471 6589</span></p>
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="mb-3">
-                      <p class="text-title mb-2 fw-medium">Payment Status</p>
-                      <span class="badge badge-danger align-items-center mb-3"><i class="ti ti-point-filled"></i>Due in
-                        10 Days</span>
-                      <div>
-                        <img src="@/assets/img/qr.svg" class="img-fluid" alt="QR" />
-                      </div>
-                    </div>
+
+                  <div class="col-md-6 text-end">
+                    <p>Subtotal: {{ formatMoney(invoice.subtotal) }}</p>
+                    <p>Discount: {{ formatMoney(invoice.discountTotal) }}</p>
+                    <h5>Total: {{ formatMoney(invoice.totalAmount) }}</h5>
                   </div>
                 </div>
-                <div>
-                  <p class="fw-medium">
-                    Invoice For :
-                    <span class="text-dark fw-medium">Design & development of Website</span>
-                  </p>
-                  <div class="table-responsive mb-3">
-                    <table class="table">
-                      <thead class="thead-light">
-                        <tr>
-                          <th>Job Description</th>
-                          <th class="text-end">Qty</th>
-                          <th class="text-end">Cost</th>
-                          <th class="text-end">Discount</th>
-                          <th class="text-end">Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            <h6>UX Strategy</h6>
-                          </td>
-                          <td class="text-gray-9 fw-medium text-end">1</td>
-                          <td class="text-gray-9 fw-medium text-end">$500</td>
-                          <td class="text-gray-9 fw-medium text-end">$100</td>
-                          <td class="text-gray-9 fw-medium text-end">$500</td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h6>Design System</h6>
-                          </td>
-                          <td class="text-gray-9 fw-medium text-end">1</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                          <td class="text-gray-9 fw-medium text-end">$100</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h6>Brand Guidellines</h6>
-                          </td>
-                          <td class="text-gray-9 fw-medium text-end">1</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                          <td class="text-gray-9 fw-medium text-end">$100</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h6>Social Media Template</h6>
-                          </td>
-                          <td class="text-gray-9 fw-medium text-end">1</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                          <td class="text-gray-9 fw-medium text-end">$100</td>
-                          <td class="text-gray-9 fw-medium text-end">$5000</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-center gap-2 mt-4">
+                  <button class="btn btn-primary" @click="downloadPdf">
+                    <i class="ti ti-download me-1"></i> Download PDF
+                  </button>
+
+                  <button class="btn btn-success" @click="payInvoice"
+                    v-if="invoice.status !== 'PAID'">
+                    Pay Invoice
+                  </button>
+
+                  <button class="btn btn-white border" @click="cloneInvoice">
+                    Clone
+                  </button>
+
+                  <button class="btn btn-dark" @click="printInvoice">
+                    Print
+                  </button>
                 </div>
-                <div class="row border-bottom mb-3">
-                  <div class="col-md-7">
-                    <div class="py-4">
-                      <div class="mb-3">
-                        <h6 class="mb-1">Terms and Conditions</h6>
-                        <p>
-                          Please pay within 15 days from the date of invoice, overdue
-                          interest @ 14% will be charged on delayed payments.
-                        </p>
-                      </div>
-                      <div class="mb-3">
-                        <h6 class="mb-1">Notes</h6>
-                        <p>Please quote invoice number when remitting funds.</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="col-md-5">
-                    <div class="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-                      <p class="mb-0">Sub Total</p>
-                      <p class="text-dark fw-medium mb-2">$5500</p>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center border-bottom mb-2 pe-3">
-                      <p class="mb-0">Discount(0%)</p>
-                      <p class="text-dark fw-medium mb-2">$400</p>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2 pe-3">
-                      <p class="mb-0">VAT(5%)</p>
-                      <p class="text-dark fw-medium mb-2">$54</p>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-2 pe-3">
-                      <h5>Total Amount</h5>
-                      <h5>$5775</h5>
-                    </div>
-                    <p class="fs-12">
-                      Amount in Words : Dollar Five thousand Seven Seventy Five
-                    </p>
-                  </div>
-                </div>
-                <div class="row justify-content-end align-items-end text-end border-bottom mb-3">
-                  <div class="col-md-3">
-                    <div class="text-end signature-img">
-                      <img src="@/assets/img/sign.svg" class="img-fluid" alt="sign">
-                    </div>
-                    <div class="text-end mb-3">
-                      <h6 class="fs-14 fw-medium pe-3">Ted M. Davis</h6>
-                      <p>Assistant Manager</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="text-center">
-                  <div class="mb-3">
-                    <img src="@/assets/img/logo.jpeg" class="img-fluid" alt="logo" />
-                  </div>
-                  <p class="text-dark mb-1">
-                    Payment Made Via bank transfer / Cheque in the name of Thomas Lawler
-                  </p>
-                  <div class="d-flex justify-content-center align-items-center">
-                    <p class="fs-12 mb-0 me-3">
-                      Bank Name : <span class="text-dark">HDFC Bank</span>
-                    </p>
-                    <p class="fs-12 mb-0 me-3">
-                      Account Number : <span class="text-dark">45366287987</span>
-                    </p>
-                    <p class="fs-12">IFSC : <span class="text-dark">HDFC0018159</span></p>
-                  </div>
-                </div>
+
               </div>
             </div>
           </div>
         </div>
       </div>
-      <!-- /Invoices -->
 
-      <div class="d-flex justify-content-center align-items-center mb-4">
-        <a href="javascript:void(0);" class="btn btn-primary d-flex justify-content-center align-items-center me-2"><i
-            class="ti ti-printer me-2"></i>Print Invoice</a>
-        <a href="javascript:void(0);" class="btn btn-white d-flex justify-content-center align-items-center border"><i
-            class="ti ti-copy me-2"></i>Clone Invoice</a>
-      </div>
     </div>
 
     <!-- Footer -->
-    <div class="footer d-sm-flex align-items-center justify-content-between bg-white border-top p-3">
+    <div class="footer d-sm-flex justify-content-between bg-white border-top p-3">
       <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
-      <p>Designed & Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
     </div>
-    <!-- /Footer -->
+
   </div>
-  <!-- /Page Wrapper -->
 </template>
+
 <script>
+import api from "@/services/api";
+
 export default {
   data() {
     return {
-      title: "Invoices",
+      title: "Invoice Details",
       text: "Applications",
-      text1: "Invoices",
+      text1: "Invoice",
+      invoice: null,
+      loading: false,
+      error: null,
     };
+  },
+
+  async created() {
+    await this.fetchInvoice();
+  },
+
+  methods: {
+    /**
+     * FETCH INVOICE
+     */
+    async fetchInvoice() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        const id = this.$route.params.id;
+
+        const res = await api.get(`/invoices/${id}`);
+
+        this.invoice = res.data.data;
+      } catch (err) {
+        this.error =
+          err.response?.data?.message || "Failed to load invoice";
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    /**
+     * DOWNLOAD PDF
+     */
+    async downloadPdf() {
+      try {
+        const id = this.$route.params.id;
+
+        const res = await api.get(`/invoices/${id}/pdf`, {
+          responseType: "blob",
+        });
+
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", `invoice-${id}.pdf`);
+        document.body.appendChild(link);
+        link.click();
+      } catch (err) {
+        alert("Failed to download PDF");
+      }
+    },
+
+    /**
+     * PAY INVOICE (PAYSTACK)
+     */
+    async payInvoice() {
+      try {
+        const id = this.$route.params.id;
+
+        const res = await api.post(`/invoices/${id}/pay`);
+
+        if (res.data?.data?.authorization_url) {
+          window.location.href = res.data.data.authorization_url;
+        }
+      } catch (err) {
+        alert("Payment initialization failed");
+      }
+    },
+
+    /**
+     * CLONE (RECURRING INVOICE)
+     */
+    async cloneInvoice() {
+      try {
+        const id = this.$route.params.id;
+
+        await api.post(`/invoices/${id}/recurring`, {
+          interval: "monthly",
+        });
+
+        alert("Invoice cloned successfully");
+      } catch (err) {
+        alert("Failed to clone invoice");
+      }
+    },
+
+    /**
+     * PRINT
+     */
+    printInvoice() {
+      window.print();
+    },
+
+    /**
+     * FORMATTERS
+     */
+    formatMoney(value) {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+      }).format(value || 0);
+    },
+
+    formatDate(date) {
+      if (!date) return "-";
+      return new Date(date).toLocaleDateString();
+    },
   },
 };
 </script>
