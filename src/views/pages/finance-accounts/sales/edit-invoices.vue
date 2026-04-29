@@ -1,234 +1,281 @@
-<script>
-import { ref } from "vue";
-const valueOne = ref(new Date());
-const valueTwo = ref(new Date());
+<script setup>
+import { ref, reactive, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import api from "@/services/api";
 
-export default {
-    data() {
-        return {
-            selected: [],
-            selectedOne: [],
-            Paymenttype: [
-                { label: "Select", value: "Select" },
-                { label: "Credit", value: "Credit" },
-                { label: "Debit", value: "Debit" }
-            ],
-            Bank: [
-                { label: "Select", value: "Select" },
-                { label: "Bank of America", value: "Bank of America" },
-                { label: "U.S. Bank", value: "U.S. Bank" }
-            ],
-            valueOne,
-            valueTwo,
-        }
+/*
+|--------------------------------------------------------------------------
+| Router
+|--------------------------------------------------------------------------
+/
+const route = useRoute();
+const router = useRouter();
+const invoiceId = route.params.id;
+
+/
+|--------------------------------------------------------------------------
+| State
+|--------------------------------------------------------------------------
+/
+const loading = ref(false);
+const saving = ref(false);
+const error = ref(null);
+
+/
+|--------------------------------------------------------------------------
+| Form (ALIGNED WITH BACKEND)
+|--------------------------------------------------------------------------
+/
+const form = reactive({
+  title: "",
+  invoiceNumber: "",
+  invoiceDate: "",
+  dueDate: "",
+  customerName: "",
+  referenceNumber: "",
+  paymentType: "CREDIT",
+  bankName: "",
+  description: "",
+  notes: "",
+  status: "DRAFT",
+  items: [
+    {
+      description: "",
+      quantity: 1,
+      rate: 0,
+      discount: 0,
     },
-}
+  ],
+});
+
+/
+|--------------------------------------------------------------------------
+| Computed Totals
+|--------------------------------------------------------------------------
+/
+const subtotal = computed(() =>
+  form.items.reduce(
+    (sum, i) => sum + i.quantity * i.rate,
+    0
+  )
+);
+
+const discountTotal = computed(() =>
+  form.items.reduce((sum, i) => sum + (i.discount || 0), 0)
+);
+
+const totalAmount = computed(() => subtotal.value - discountTotal.value);
+
+/
+|--------------------------------------------------------------------------
+| Fetch Invoice
+|--------------------------------------------------------------------------
+/
+const fetchInvoice = async () => {
+  try {
+    loading.value = true;
+
+    const { data } = await api.get(/invoices/${invoiceId});
+
+    Object.assign(form, data.data);
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+/
+|--------------------------------------------------------------------------
+| Items
+|--------------------------------------------------------------------------
+/
+const addItem = () => {
+  form.items.push({
+    description: "",
+    quantity: 1,
+    rate: 0,
+    discount: 0,
+  });
+};
+
+const removeItem = (index) => {
+  if (form.items.length === 1) return;
+  form.items.splice(index, 1);
+};
+
+/
+|--------------------------------------------------------------------------
+| Submit
+|--------------------------------------------------------------------------
+/
+const submit = async (status = "DRAFT") => {
+  try {
+    saving.value = true;
+
+    const payload = {
+      ...form,
+      status,
+      invoiceDate: new Date(form.invoiceDate),
+      dueDate: new Date(form.dueDate),
+    };
+
+    await api.put(/invoices/${invoiceId}, payload);
+
+    router.push("/sales/invoices");
+  } catch (err) {
+    error.value = err.response?.data?.message || err.message;
+  } finally {
+    saving.value = false;
+  }
+};
+
+/
+|--------------------------------------------------------------------------
+| Actions
+|--------------------------------------------------------------------------
+/
+const saveDraft = () => submit("DRAFT");
+const saveAndSend = () => submit("SENT");
+
+const downloadPDF = async () => {
+  const res = await api.get(/invoices/${invoiceId}/pdf, {
+    responseType: "blob",
+  });
+
+  const url = window.URL.createObjectURL(new Blob([res.data]));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = invoice-${invoiceId}.pdf;
+  link.click();
+};
+
+const initiatePayment = async () => {
+  const { data } = await api.post(/invoices/${invoiceId}/pay);
+  window.location.href = data.data.authorization_url;
+};
+
+/
+|--------------------------------------------------------------------------
+| Init
+|--------------------------------------------------------------------------
+*/
+onMounted(() => {
+  fetchInvoice();
+});
 </script>
 
 <template>
-    <layout-header></layout-header>
-    <layout-sidebar></layout-sidebar>
+  <layout-header />
+  <layout-sidebar />
 
-    <!-- Page Wrapper -->
-    <div class="page-wrapper">
-        <div class="content">
-            <div class="row align-items-center">
-                <div class="col-md-10 mx-auto">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center justify-content-between mb-4">
-                                <router-link to="/sales/invoices"
-                                    class="back-icon align-items-center fs-14 d-inline-flex fw-medium">
-                                    <span class=" d-flex justify-content-center align-items-center rounded-circle me-2">
-                                        <i class="ti ti-arrow-left fs-12"></i>
-                                    </span>
-                                    Back to List
-                                </router-link>
-                                <a href="javascript:void(0);" class="text-primary text-decoration-underline"
-                                    data-bs-toggle="modal" data-bs-target="#invoice_preview">
-                                    Preview
-                                </a>
-                            </div>
+  <div class="page-wrapper">
+    <div class="content">
+      <div class="col-md-10 mx-auto">
 
-                            <!-- My details -->
-                            <div class="bg-light p-3 rounded mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5>From</h5>
-                                    <a href="javascript:void(0);" class="text-dark fw-medium"><span
-                                            class="text-gray me-2"><i class="ti ti-edit"></i></span>Edit Details</a>
-                                </div>
-                                <div>
-                                    <h4 class="mb-1">Thomas Lawler</h4>
-                                    <p class="mb-1">2077 Chicago Avenue Orosi, CA 93647</p>
-                                    <p class="mb-1">Email : <span class="text-dark">Tarala2445@example.com</span></p>
-                                    <p>Phone : <span class="text-dark">+1 987 654 3210</span></p>
-                                </div>
-                            </div>
-                            <!-- /My details -->
+        <div v-if="error" class="alert alert-danger">{{ error }}</div>
 
-                            <!-- Invoice Details-->
-                            <div class="border-bottom mb-3">
-                                <h4 class="mb-2">Invoice Details</h4>
-                                <div class="mb-2">
-                                    <label class="form-label">Invoice Title</label>
-                                    <input type="text" class="form-control" value="Design & development of Website">
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-4 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Invoice No</label>
-                                            <input type="text" class="form-control" value="INV-1454">
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Invoice Date</label>
-                                            <div class="input-icon position-relative w-100 me-2">
-                                                <span class="input-icon-addon">
-                                                    <i class="ti ti-calendar"></i>
-                                                </span>
-                                                <a-date-picker v-model="valueOne" class="form-control datetimepicker"
-                                                    placeholder="dd/mm/yyyy" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Due Date</label>
-                                            <div class="input-icon position-relative w-100 me-2">
-                                                <span class="input-icon-addon">
-                                                    <i class="ti ti-calendar"></i>
-                                                </span>
-                                                <a-date-picker v-model="valueTwo" class="form-control datetimepicker"
-                                                    placeholder="dd/mm/yyyy" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- /Invoice Details-->
+        <div v-if="loading" class="text-center py-5">Loading...</div>
 
-                            <!-- Payment Details-->
-                            <div class="border-bottom mb-3">
-                                <h4 class="mb-2">Payment Details</h4>
+        <div v-else class="card">
+          <div class="card-body">
 
-                                <div class="row">
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
-                                        <div class="mb-3">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <label class="form-label">Customer</label>
-                                                <a href="javascript:void(0);"
-                                                    class="text-primary fw-medium d-flex align-items-center"
-                                                    data-bs-toggle="modal" data-bs-target="#add_customer">
-                                                    <i class="ti ti-plus me-2"></i>Add New
-                                                </a>
-                                            </div>
-                                            <input type="text" class="form-control" value="Anthony Lewis">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Reference Number</label>
-                                            <input type="text" class="form-control">
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Select Payment Type</label>
-                                            <vue3-select :options="Paymenttype" v-model="selected"
-                                                placeholder="Select" />
-                                        </div>
-                                    </div>
-                                    <div class="col-lg-3 col-md-6 col-sm-12">
-                                        <div class="mb-3">
-                                            <label class="form-label">Bank Details</label>
-                                            <vue3-select :options="Bank" v-model="selectedOne"
-                                                placeholder="Bank of America" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- /Payment Details-->
-
-                            <!-- Add Items-->
-                            <div class="border-bottom mb-3">
-                                <h4 class="mb-2">Add Items</h4>
-                                <div class="border rounded p-3 mb-3">
-                                    <div class="add-description-info">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <label class="form-label">Description</label>
-                                                    <input type="text" class="form-control">
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="row">
-                                                    <div class="col-md-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Qty</label>
-                                                            <input type="text" class="form-control">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Discount</label>
-                                                            <input type="text" class="form-control">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Rate</label>
-                                                            <input type="text" class="form-control">
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <a href="javascript:void(0);"
-                                        class="text-primary add-more-description fw-medium d-flex align-items-center"><i
-                                            class="ti ti-plus me-2"></i>Add New</a>
-                                </div>
-                            </div>
-                            <!-- /Add Items-->
-
-                            <!-- Additional Details-->
-                            <div>
-                                <h4 class="mb-2">Additional Details</h4>
-                                <div class="mb-3">
-                                    <label class="form-label"> Description</label>
-                                    <textarea class="form-control" rows="3"></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-control" rows="3"></textarea>
-                                </div>
-                            </div>
-                            <!-- Additional Details-->
-
-                            <div class="d-flex justify-content-end align-items-center flex-wrap row-gap-3">
-                                <a href="javascript:void(0);"
-                                    class="btn btn-dark d-flex justify-content-center align-items-center"><i
-                                        class="ti ti-printer me-2"></i>Save as Draft</a>
-                                <a href="javascript:void(0);"
-                                    class="btn btn-primary d-flex justify-content-center align-items-center  ms-2"><i
-                                        class="ti ti-copy me-2"></i>Save & Send</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <!-- Header -->
+            <div class="d-flex justify-content-between mb-4">
+              <router-link to="/sales/invoices">← Back</router-link>
+              <button class="btn btn-outline-primary" @click="downloadPDF">
+                Download PDF
+              </button>
             </div>
+
+            <!-- Invoice Details -->
+            <h5>Invoice Details</h5>
+
+            <input v-model="form.title" class="form-control mb-2" placeholder="Title" />
+            <input v-model="form.invoiceNumber" class="form-control mb-2" placeholder="Invoice No" />
+
+            <div class="row">
+              <div class="col-md-6">
+                <input type="date" v-model="form.invoiceDate" class="form-control mb-2" />
+              </div>
+              <div class="col-md-6">
+                <input type="date" v-model="form.dueDate" class="form-control mb-2" />
+              </div>
+            </div>
+
+            <!-- Customer -->
+            <h5 class="mt-4">Customer</h5>
+
+            <input v-model="form.customerName" class="form-control mb-2" placeholder="Customer Name" />
+            <input v-model="form.referenceNumber" class="form-control mb-2" placeholder="Reference" />
+
+            <!-- Payment -->
+            <div class="row">
+              <div class="col-md-6">
+                <select v-model="form.paymentType" class="form-control">
+                  <option value="CREDIT">Credit</option>
+                  <option value="DEBIT">Debit</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <input v-model="form.bankName" class="form-control" placeholder="Bank" />
+              </div>
+            </div>
+
+            <!-- Items -->
+            <h5 class="mt-4">Items</h5>
+
+            <div v-for="(item, index) in form.items" :key="index" class="border p-3 mb-2">
+              <input v-model="item.description" class="form-control mb-2" placeholder="Description" />
+
+              <div class="row">
+                <div class="col-md-3">
+                  <input type="number" v-model.number="item.quantity" class="form-control" placeholder="Qty" />
+                </div>
+                <div class="col-md-3">
+                  <input type="number" v-model.number="item.rate" class="form-control" placeholder="Rate" />
+                </div>
+                <div class="col-md-3">
+                  <input type="number" v-model.number="item.discount" class="form-control" placeholder="Discount" />
+                </div>
+                <div class="col-md-3 d-flex align-items-center">
+                  <button class="btn btn-danger btn-sm" @click="removeItem(index)">X</button>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-outline-primary" @click="addItem">+ Add Item</button>
+
+            <!-- Totals -->
+            <div class="mt-4 text-end">
+              <p>Subtotal: {{ subtotal }}</p>
+              <p>Discount: {{ discountTotal }}</p>
+              <h5>Total: {{ totalAmount }}</h5>
+            </div>
+
+            <!-- Notes -->
+            <textarea v-model="form.description" class="form-control mt-3" placeholder="Description" />
+            <textarea v-model="form.notes" class="form-control mt-2" placeholder="Notes" />
+
+            <!-- Actions -->
+            <div class="mt-4 d-flex justify-content-end">
+              <button class="btn btn-dark me-2" :disabled="saving" @click="saveDraft">
+                Save Draft
+              </button>
+
+              <button class="btn btn-primary me-2" :disabled="saving" @click="saveAndSend">
+                Save & Send
+              </button>
+
+              <button class="btn btn-success" @click="initiatePayment">
+                Pay
+              </button>
+            </div>
+
+          </div>
         </div>
 
-        <!-- Footer -->
-        <div class="footer d-sm-flex align-items-center justify-content-between bg-white border-top p-3">
-            <p class="mb-0">{{ new Date().getFullYear() }} &copy; SmartHR.</p>
-            <p>Designed & Developed By <a href="javascript:void(0);" class="text-primary">Dreams</a></p>
-        </div>
-        <!-- /Footer -->
+      </div>
     </div>
-    <!-- /Page Wrapper -->
-
-    <invoices-modal></invoices-modal>
+  </div>
 </template>
