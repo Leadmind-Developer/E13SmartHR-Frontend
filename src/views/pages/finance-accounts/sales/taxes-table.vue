@@ -10,7 +10,27 @@ export default {
       currentPage: 1,
       pageSize: 10,
 
-      // form state (for modal integration later)
+      columns: [
+        {
+          title: "Tax Name",
+          dataIndex: "name",
+          key: "name",
+        },
+        {
+          title: "Rate",
+          dataIndex: "rate",
+          key: "rate",
+        },
+        {
+          title: "Status",
+          key: "status",
+        },
+        {
+          title: "Action",
+          key: "action",
+        },
+      ],
+
       form: {
         id: null,
         name: "",
@@ -39,7 +59,19 @@ export default {
     },
 
     totalPages() {
-      return Math.ceil(this.filteredTaxes.length / this.pageSize) || 1;
+      return Math.max(
+        1,
+        Math.ceil(this.filteredTaxes.length / this.pageSize)
+      );
+    },
+  },
+
+  watch: {
+    searchQuery() {
+      this.currentPage = 1;
+    },
+    pageSize() {
+      this.currentPage = 1;
     },
   },
 
@@ -49,8 +81,7 @@ export default {
 
       try {
         const { data } = await api.get("/taxes");
-
-        this.taxes = data.data || [];
+        this.taxes = data?.data || [];
       } catch (err) {
         console.error("Failed to fetch taxes", err);
       } finally {
@@ -60,7 +91,10 @@ export default {
 
     async createTax() {
       try {
-        await api.post("/taxes", this.form);
+        await api.post("/taxes", {
+          ...this.form,
+          rate: Number(this.form.rate),
+        });
         await this.fetchTaxes();
         this.resetForm();
       } catch (err) {
@@ -70,7 +104,10 @@ export default {
 
     async updateTax() {
       try {
-        await api.put(`/taxes/${this.form.id}`, this.form);
+        await api.put(`/taxes/${this.form.id}`, {
+          ...this.form,
+          rate: Number(this.form.rate),
+        });
         await this.fetchTaxes();
         this.resetForm();
       } catch (err) {
@@ -102,7 +139,12 @@ export default {
     },
 
     editTax(tax) {
-      this.form = { ...tax };
+      this.form = {
+        id: tax.id,
+        name: tax.name,
+        rate: tax.rate,
+        status: tax.status,
+      };
     },
 
     resetForm() {
@@ -127,10 +169,13 @@ export default {
     <!-- Controls -->
     <div class="row mb-2">
       <div class="col-md-6">
-        <select v-model="pageSize" class="form-select form-select-sm">
-          <option value="10">10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
+        <select
+          v-model.number="pageSize"
+          class="form-select form-select-sm"
+        >
+          <option :value="10">10</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
         </select>
       </div>
 
@@ -149,22 +194,19 @@ export default {
         :columns="columns"
         :data-source="paginatedTaxes"
         :loading="loading"
+        :row-key="record => record.id"
+        :pagination="false"
       >
         <template #bodyCell="{ column, record }">
 
-          <!-- NAME -->
           <template v-if="column.dataIndex === 'name'">
-            <div class="d-flex align-items-center">
-              <strong class="me-2">{{ record.name }}</strong>
-            </div>
+            <strong>{{ record.name }}</strong>
           </template>
 
-          <!-- RATE -->
           <template v-if="column.dataIndex === 'rate'">
             {{ record.rate }}%
           </template>
 
-          <!-- STATUS -->
           <template v-if="column.key === 'status'">
             <button
               class="btn btn-sm"
@@ -175,9 +217,8 @@ export default {
             </button>
           </template>
 
-          <!-- ACTIONS -->
           <template v-if="column.key === 'action'">
-            <div class="action-icon d-inline-flex">
+            <div class="d-flex">
               <a @click="editTax(record)" class="me-2">
                 <i class="ti ti-edit"></i>
               </a>
@@ -190,13 +231,17 @@ export default {
 
         </template>
       </a-table>
+
+      <div v-if="!loading && paginatedTaxes.length === 0" class="text-center p-3">
+        No taxes found
+      </div>
     </div>
 
     <!-- Pagination -->
     <div class="d-flex justify-content-between mt-3">
       <div>
         Showing
-        {{ (currentPage - 1) * pageSize + 1 }}
+        {{ filteredTaxes.length === 0 ? 0 : (currentPage - 1) * pageSize + 1 }}
         -
         {{ Math.min(currentPage * pageSize, filteredTaxes.length) }}
         of {{ filteredTaxes.length }}
@@ -223,28 +268,3 @@ export default {
 
   </div>
 </template>
-
-<script>
-// table columns
-export const columns = [
-  {
-    title: "Tax Name",
-    dataIndex: "name",
-    key: "name",
-    sorter: true,
-  },
-  {
-    title: "Rate",
-    dataIndex: "rate",
-    key: "rate",
-  },
-  {
-    title: "Status",
-    key: "status",
-  },
-  {
-    title: "Action",
-    key: "action",
-  },
-];
-</script>
