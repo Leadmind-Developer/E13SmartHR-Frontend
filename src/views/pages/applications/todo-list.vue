@@ -152,7 +152,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import api from "@/services/api";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 
 /**
  * STATE
@@ -168,9 +168,10 @@ const filters = ref({
 /**
  * SOCKET (Realtime)
  */
-const socket = io("https://api.e13solution.com", {
+/** const socket = io("https://api.e13solution.com", {
   transports: ["websocket"],
-});
+}); 
+*/
 
 /**
  * FETCH TODOS
